@@ -1,0 +1,13 @@
+---
+extends: default
+
+rules:
+  # Actions are pinned to full 40-char commit SHAs (required by the semgrep /
+  # scorecard supply-chain gates), which makes some `uses:` lines exceed 80.
+  line-length:
+    max: 100
+    level: warning
+  comments:
+    min-spaces-from-content: 1
+  document-start: disable
+  truthy: disable

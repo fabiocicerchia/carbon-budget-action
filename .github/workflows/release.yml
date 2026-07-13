@@ -1,0 +1,43 @@
+name: Release
+
+# release-please reads Conventional Commit messages on main and keeps an open
+# "release PR" with the next version bump + CHANGELOG. Merging that PR tags the
+# release (vX.Y.Z), publishes a GitHub Release, and — because this is an Action —
+# we then move the floating major tag (e.g. v1) so consumers can pin
+# `uses: fabiocicerchia/carbon-budget-action@v1`.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create tags & releases, move the floating major tag
+      pull-requests: write  # open/update the release PR
+    steps:
+      # Config in release-please-config.json + .release-please-manifest.json.
+      # "simple" tracks version.txt + CHANGELOG.md (language-agnostic).
+      # yamllint disable-line rule:line-length
+      - uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4
+        id: release
+
+      # Only runs on the commit that merges the release PR.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Move floating major tag
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          MAJOR: v${{ steps.release.outputs.major }}
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          BOT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "$BOT_EMAIL"
+          git tag -f "$MAJOR" "$TAG"
+          git push -f origin "$MAJOR"

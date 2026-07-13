@@ -1,0 +1,48 @@
+name: carbon-budget-action
+description: >-
+  CI gate that fails when the estimated carbon footprint of a deployment
+  exceeds a budget — bundle-size checks, but for carbon.
+author: Fabio Cicerchia
+branding:
+  icon: cloud
+  color: green
+inputs:
+  budget-gco2e:
+    description: Maximum allowed footprint per deploy in gCO2e
+    required: true
+  grid-intensity:
+    description: gCO2e/kWh of the target region's grid (default world average)
+    default: "480"
+  replicas:
+    description: Number of replicas the deployment will run
+    default: "1"
+  cpu-request:
+    description: CPU request per replica (e.g. 500m, 2)
+    default: "500m"
+  memory-request:
+    description: Memory request per replica (e.g. 512Mi, 2Gi)
+    default: "512Mi"
+  hours:
+    description: Hours the workload runs per deploy cycle (default 720 = 30d)
+    default: "720"
+  mode:
+    description: "gate (fail over budget) or report (never fail)"
+    default: gate
+outputs:
+  estimated-gco2e:
+    description: Estimated footprint in gCO2e
+  within-budget:
+    description: "true/false"
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        BUDGET_GCO2E: ${{ inputs.budget-gco2e }}
+        GRID_INTENSITY: ${{ inputs.grid-intensity }}
+        REPLICAS: ${{ inputs.replicas }}
+        CPU_REQUEST: ${{ inputs.cpu-request }}
+        MEMORY_REQUEST: ${{ inputs.memory-request }}
+        HOURS: ${{ inputs.hours }}
+        MODE: ${{ inputs.mode }}
+      run: python ${{ github.action_path }}/carbon_budget.py
