@@ -128,7 +128,17 @@ def estimate_gco2e(replicas, cpu_cores, memory_gb, hours, grid_intensity):
     return kwh * grid_intensity
 
 
-def render(est, budget, replicas, cpu, mem, hours, intensity, base=None):
+def amortized_embodied_gco2e(embodied_gco2e_per_replica, lifetime_years, hours, replicas):
+    """Allocate a share of each replica's underlying server's manufacturing
+    (embodied) carbon to this run, proportional to hours run over the
+    server's expected lifetime."""
+    if not embodied_gco2e_per_replica or not lifetime_years:
+        return 0.0
+    lifetime_hours = lifetime_years * 365 * 24
+    return embodied_gco2e_per_replica * (hours / lifetime_hours) * replicas
+
+
+def render(est, budget, replicas, cpu, mem, hours, intensity, base=None, embodied=0.0):
     pct = est / budget * 100 if budget else 0
     bar = "█" * min(int(pct / 5), 20)
     status = "✅ within budget" if est <= budget else "❌ OVER BUDGET"
@@ -142,6 +152,8 @@ def render(est, budget, replicas, cpu, mem, hours, intensity, base=None):
         f"Assumptions: {replicas} replica(s) × ({cpu} CPU, {mem}) × {hours}h, "
         f"grid {intensity} gCO2e/kWh, PUE {PUE}.",
     ]
+    if embodied:
+        lines.append(f"Includes {embodied:,.0f} gCO2e amortized embodied carbon.")
     if base is not None:
         delta = est - base
         arrow = "▲" if delta > 0 else "▼" if delta < 0 else "▬"
@@ -170,12 +182,19 @@ def main():
         if (live := fetch_live_intensity(em_zone, em_token)) is not None:
             intensity = live
 
-    est = estimate_gco2e(
-        replicas, parse_cpu(cpu), parse_memory_gb(mem), hours, intensity
+    embodied = amortized_embodied_gco2e(
+        float(os.environ.get("EMBODIED_GCO2E", "0")),
+        float(os.environ.get("EMBODIED_LIFETIME_YEARS", "4")),
+        hours,
+        replicas,
+    )
+    est = (
+        estimate_gco2e(replicas, parse_cpu(cpu), parse_memory_gb(mem), hours, intensity)
+        + embodied
     )
     within = est <= budget
     base = float(base_env) if (base_env := os.environ.get("BASE_GCO2E")) else None
-    summary = render(est, budget, replicas, cpu, mem, hours, intensity, base=base)
+    summary = render(est, budget, replicas, cpu, mem, hours, intensity, base=base, embodied=embodied)
     print(summary)
 
     if path := os.environ.get("GITHUB_STEP_SUMMARY"):

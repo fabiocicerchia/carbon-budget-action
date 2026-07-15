@@ -2,6 +2,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 from carbon_budget import (
+    amortized_embodied_gco2e,
     estimate_gco2e,
     fetch_live_intensity,
     find_pr_number,
@@ -75,9 +76,26 @@ def test_render_over_budget_flags():
     assert "OVER BUDGET" in out and "120%" in out
 
 
+def test_amortized_embodied_gco2e_scales_with_hours_and_replicas():
+    # 40,000 gCO2e server, 4y lifetime, 1 month (720h), 2 replicas
+    got = amortized_embodied_gco2e(40000, 4, 720, 2)
+    lifetime_hours = 4 * 365 * 24
+    assert abs(got - 40000 * (720 / lifetime_hours) * 2) < 1e-6
+
+
+def test_amortized_embodied_gco2e_zero_when_not_configured():
+    assert amortized_embodied_gco2e(0, 4, 720, 2) == 0.0
+    assert amortized_embodied_gco2e(1000, 0, 720, 2) == 0.0
+
+
 def test_render_shows_delta_against_base():
     out = render(1200, 2000, 2, "1", "1Gi", 720, 480, base=1000)
     assert "▲ +200 gCO2e (+20%)" in out
+
+
+def test_render_shows_embodied_line():
+    out = render(1200, 2000, 2, "1", "1Gi", 720, 480, embodied=300)
+    assert "300 gCO2e amortized embodied carbon" in out
 
 
 def test_find_pr_number_reads_event_payload(tmp_path, monkeypatch):

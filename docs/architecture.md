@@ -23,10 +23,13 @@ Cloud Carbon Footprint methodology, kept explainable. Per replica:
 energy_kWh  = (cpu_cores * WATTS_PER_CORE + memory_gb * WATTS_PER_GB)
               * PUE * hours / 1000
 gco2e       = energy_kWh * grid_intensity * replicas
+              + embodied_gco2e * (hours / (lifetime_years * 365 * 24)) * replicas
 ```
 
 All constants (`WATTS_PER_CORE`, `WATTS_PER_GB`, `PUE`) live at the top of
-`carbon_budget.py` so the estimate stays auditable and tunable.
+`carbon_budget.py` so the estimate stays auditable and tunable. The embodied
+term is opt-in (`embodied-gco2e` defaults to `0`) and amortizes one replica's
+underlying server's manufacturing footprint over its expected lifetime.
 
 ## Data flow
 

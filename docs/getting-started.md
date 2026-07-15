@@ -41,6 +41,10 @@ Pass `base-gco2e` (e.g. the `estimated-gco2e` output from a run on the base
 branch) to render a Δ, and `pr-comment: true` + `github-token: ${{ github.token }}`
 to post/update a PR comment with the summary instead of only the job summary.
 
+Pass `embodied-gco2e` (one replica's server's total manufacturing footprint)
++ `embodied-lifetime-years` (default 4) to amortize embodied carbon into the
+estimate, proportional to the run's `hours` over the hardware's lifetime.
+
 ## Outputs
 
 | Output            | Description                       |

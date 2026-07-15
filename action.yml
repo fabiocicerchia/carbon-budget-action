@@ -51,6 +51,15 @@ inputs:
   github-token:
     description: Token for posting the PR comment, e.g. ${{ github.token }}
     default: ""
+  embodied-gco2e:
+    description: >-
+      Total embodied (manufacturing) carbon of ONE replica's underlying
+      server, in gCO2e. Amortized over embodied-lifetime-years and added to
+      the estimate.
+    default: "0"
+  embodied-lifetime-years:
+    description: Expected hardware lifetime used to amortize embodied-gco2e
+    default: "4"
 outputs:
   estimated-gco2e:
     description: Estimated footprint in gCO2e
@@ -74,4 +83,6 @@ runs:
         BASE_GCO2E: ${{ inputs.base-gco2e }}
         PR_COMMENT: ${{ inputs.pr-comment }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        EMBODIED_GCO2E: ${{ inputs.embodied-gco2e }}
+        EMBODIED_LIFETIME_YEARS: ${{ inputs.embodied-lifetime-years }}
       run: python ${{ github.action_path }}/carbon_budget.py
