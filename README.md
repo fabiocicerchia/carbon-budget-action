@@ -38,7 +38,7 @@ without ever failing the build — the adoption on-ramp.
 ## Status & roadmap
 
 - [x] Composite action, estimate + gate + job summary + outputs
-- [ ] Read replicas/requests straight from the k8s manifests in the diff
+- [x] Read replicas/requests straight from the k8s manifests in the diff
 - [ ] Live grid intensity (pairs with `carbon-region-picker`)
 - [ ] PR comment with the delta vs the base branch (true "bundle-size" UX)
 - [ ] Embodied-carbon amortization option

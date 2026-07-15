@@ -11,11 +11,41 @@ Constants follow the Cloud Carbon Footprint methodology (avg server CPU
 """
 
 import os
+import re
 import sys
 
 W_PER_CORE = 4.0
 W_PER_GB = 0.4
 PUE = 1.2
+
+
+def parse_manifest(text):
+    """Pull replicas/cpu/memory requests out of a k8s Deployment/StatefulSet
+    manifest.
+
+    # ponytail: line matching, not a YAML parser — first container's first
+    # `requests:` block only, single-document files only. Swap for PyYAML if
+    # multi-container manifests ever need per-container budgets (that would
+    # also break the "no runtime dependencies" guardrail, so do it deliberately).
+    """
+    out = {}
+    m = re.search(r"^\s*replicas:\s*(\d+)", text, re.MULTILINE)
+    if m:
+        out["replicas"] = int(m.group(1))
+    in_requests = False
+    for line in text.splitlines():
+        if re.match(r"\s*requests:\s*$", line):
+            in_requests = True
+            continue
+        if not in_requests:
+            continue
+        if m := re.match(r"\s*cpu:\s*[\"']?([^\"'\s]+)", line):
+            out.setdefault("cpu", m.group(1))
+        elif m := re.match(r"\s*memory:\s*[\"']?([^\"'\s]+)", line):
+            out.setdefault("memory", m.group(1))
+        elif not re.match(r"\s+\S", line):
+            in_requests = False
+    return out
 
 
 def parse_cpu(value):
@@ -64,6 +94,13 @@ def main():
     mem = os.environ.get("MEMORY_REQUEST", "512Mi")
     hours = float(os.environ.get("HOURS", "720"))
     mode = os.environ.get("MODE", "gate")
+
+    if manifest_path := os.environ.get("MANIFEST_PATH"):
+        with open(manifest_path) as fh:
+            parsed = parse_manifest(fh.read())
+        replicas = parsed.get("replicas", replicas)
+        cpu = parsed.get("cpu", cpu)
+        mem = parsed.get("memory", mem)
 
     est = estimate_gco2e(
         replicas, parse_cpu(cpu), parse_memory_gb(mem), hours, intensity

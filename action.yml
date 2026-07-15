@@ -22,6 +22,11 @@ inputs:
   memory-request:
     description: Memory request per replica (e.g. 512Mi, 2Gi)
     default: "512Mi"
+  manifest-path:
+    description: >-
+      Path to a k8s Deployment/StatefulSet manifest to read replicas/cpu/memory
+      requests from (overrides replicas/cpu-request/memory-request)
+    default: ""
   hours:
     description: Hours the workload runs per deploy cycle (default 720 = 30d)
     default: "720"
@@ -43,6 +48,7 @@ runs:
         REPLICAS: ${{ inputs.replicas }}
         CPU_REQUEST: ${{ inputs.cpu-request }}
         MEMORY_REQUEST: ${{ inputs.memory-request }}
+        MANIFEST_PATH: ${{ inputs.manifest-path }}
         HOURS: ${{ inputs.hours }}
         MODE: ${{ inputs.mode }}
       run: python ${{ github.action_path }}/carbon_budget.py

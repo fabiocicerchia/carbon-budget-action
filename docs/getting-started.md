@@ -29,6 +29,10 @@ The job fails when the estimate exceeds `budget-gco2e`. Use `mode: report` to
 post the estimate to the job summary without ever failing the build — the
 adoption on-ramp.
 
+Pass `manifest-path` instead of `replicas`/`cpu-request`/`memory-request` to
+read them straight from a k8s Deployment/StatefulSet manifest (first
+container's `requests:` block).
+
 ## Outputs
 
 | Output            | Description                       |
