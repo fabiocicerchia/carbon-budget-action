@@ -37,6 +37,10 @@ Pass `em-zone` + `em-token` to fetch live grid intensity from
 [Electricity Maps](https://www.electricitymaps.com/) instead of the static
 `grid-intensity` input (falls back to it on any API error).
 
+Pass `base-gco2e` (e.g. the `estimated-gco2e` output from a run on the base
+branch) to render a Δ, and `pr-comment: true` + `github-token: ${{ github.token }}`
+to post/update a PR comment with the summary instead of only the job summary.
+
 ## Outputs
 
 | Output            | Description                       |

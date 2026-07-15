@@ -40,7 +40,7 @@ without ever failing the build — the adoption on-ramp.
 - [x] Composite action, estimate + gate + job summary + outputs
 - [x] Read replicas/requests straight from the k8s manifests in the diff
 - [x] Live grid intensity (pairs with `carbon-region-picker`)
-- [ ] PR comment with the delta vs the base branch (true "bundle-size" UX)
+- [x] PR comment with the delta vs the base branch (true "bundle-size" UX)
 - [ ] Embodied-carbon amortization option
 
 ## Documentation

@@ -4,10 +4,12 @@ from unittest.mock import MagicMock, patch
 from carbon_budget import (
     estimate_gco2e,
     fetch_live_intensity,
+    find_pr_number,
     parse_cpu,
     parse_manifest,
     parse_memory_gb,
     render,
+    upsert_pr_comment,
 )
 
 
@@ -71,3 +73,37 @@ def test_estimate_scales_linearly_with_replicas():
 def test_render_over_budget_flags():
     out = render(1200, 1000, 2, "1", "1Gi", 720, 480)
     assert "OVER BUDGET" in out and "120%" in out
+
+
+def test_render_shows_delta_against_base():
+    out = render(1200, 2000, 2, "1", "1Gi", 720, 480, base=1000)
+    assert "▲ +200 gCO2e (+20%)" in out
+
+
+def test_find_pr_number_reads_event_payload(tmp_path, monkeypatch):
+    event = tmp_path / "event.json"
+    event.write_text(json.dumps({"pull_request": {"number": 42}}))
+    monkeypatch.setenv("GITHUB_EVENT_PATH", str(event))
+    assert find_pr_number() == 42
+
+
+def test_find_pr_number_missing_path_returns_none(monkeypatch):
+    monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
+    assert find_pr_number() is None
+
+
+def test_upsert_pr_comment_patches_existing_marker_comment():
+    list_resp = MagicMock()
+    list_resp.read.return_value = json.dumps(
+        [{"id": 7, "body": "<!-- carbon-budget-action -->\nold"}]
+    ).encode()
+    list_resp.__enter__.return_value = list_resp
+    patch_resp = MagicMock()
+    patch_resp.__enter__.return_value = patch_resp
+
+    with patch("urllib.request.urlopen", side_effect=[list_resp, patch_resp]) as m:
+        upsert_pr_comment("acme/repo", 1, "tok", "new body")
+
+    second_call_req = m.call_args_list[1].args[0]
+    assert second_call_req.get_method() == "PATCH"
+    assert "/issues/comments/7" in second_call_req.full_url

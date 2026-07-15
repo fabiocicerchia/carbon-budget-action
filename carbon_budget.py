@@ -71,6 +71,43 @@ def fetch_live_intensity(zone, token, timeout=15):
         return None
 
 
+def find_pr_number():
+    """Read the PR number out of the pull_request event payload GitHub points
+    $GITHUB_EVENT_PATH at."""
+    import json
+
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if not event_path or not os.path.exists(event_path):
+        return None
+    with open(event_path) as fh:
+        event = json.load(fh)
+    return event.get("pull_request", {}).get("number") or event.get("number")
+
+
+def upsert_pr_comment(repo, pr_number, token, body, timeout=15):
+    """Create or update this action's PR comment (found via an HTML marker,
+    so re-runs edit one comment instead of piling up new ones)."""
+    import json
+    import urllib.request
+
+    marker = "<!-- carbon-budget-action -->"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    list_url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+
+    req = urllib.request.Request(list_url, headers=headers)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        comments = json.loads(r.read())
+    existing = next((c for c in comments if marker in c.get("body", "")), None)
+
+    url = f"https://api.github.com/repos/{repo}/issues/comments/{existing['id']}" if existing else list_url
+    method = "PATCH" if existing else "POST"
+    payload = json.dumps({"body": f"{marker}\n{body}"}).encode()
+    req = urllib.request.Request(
+        url, data=payload, headers={**headers, "Content-Type": "application/json"}, method=method
+    )
+    urllib.request.urlopen(req, timeout=timeout)
+
+
 def parse_cpu(value):
     value = str(value).strip()
     return float(value[:-1]) / 1000 if value.endswith("m") else float(value)
@@ -91,22 +128,26 @@ def estimate_gco2e(replicas, cpu_cores, memory_gb, hours, grid_intensity):
     return kwh * grid_intensity
 
 
-def render(est, budget, replicas, cpu, mem, hours, intensity):
+def render(est, budget, replicas, cpu, mem, hours, intensity, base=None):
     pct = est / budget * 100 if budget else 0
     bar = "█" * min(int(pct / 5), 20)
     status = "✅ within budget" if est <= budget else "❌ OVER BUDGET"
-    return "\n".join(
-        [
-            "## 🌍 Carbon budget check",
-            "",
-            f"Estimated: **{est:,.0f} gCO2e** / budget {budget:,.0f} gCO2e ({pct:.0f}%) {status}",
-            "",
-            f"`{bar}`",
-            "",
-            f"Assumptions: {replicas} replica(s) × ({cpu} CPU, {mem}) × {hours}h, "
-            f"grid {intensity} gCO2e/kWh, PUE {PUE}.",
-        ]
-    )
+    lines = [
+        "## 🌍 Carbon budget check",
+        "",
+        f"Estimated: **{est:,.0f} gCO2e** / budget {budget:,.0f} gCO2e ({pct:.0f}%) {status}",
+        "",
+        f"`{bar}`",
+        "",
+        f"Assumptions: {replicas} replica(s) × ({cpu} CPU, {mem}) × {hours}h, "
+        f"grid {intensity} gCO2e/kWh, PUE {PUE}.",
+    ]
+    if base is not None:
+        delta = est - base
+        arrow = "▲" if delta > 0 else "▼" if delta < 0 else "▬"
+        pct_delta = delta / base * 100 if base else 0
+        lines += ["", f"Δ vs base: {arrow} {delta:+,.0f} gCO2e ({pct_delta:+.0f}%)"]
+    return "\n".join(lines)
 
 
 def main():
@@ -133,7 +174,8 @@ def main():
         replicas, parse_cpu(cpu), parse_memory_gb(mem), hours, intensity
     )
     within = est <= budget
-    summary = render(est, budget, replicas, cpu, mem, hours, intensity)
+    base = float(base_env) if (base_env := os.environ.get("BASE_GCO2E")) else None
+    summary = render(est, budget, replicas, cpu, mem, hours, intensity, base=base)
     print(summary)
 
     if path := os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -143,6 +185,16 @@ def main():
         with open(path, "a") as fh:
             fh.write(f"estimated-gco2e={est:.0f}\n")
             fh.write(f"within-budget={'true' if within else 'false'}\n")
+
+    if os.environ.get("PR_COMMENT", "").lower() == "true":
+        token = os.environ.get("GITHUB_TOKEN")
+        repo = os.environ.get("GITHUB_REPOSITORY")
+        pr_number = find_pr_number()
+        if token and repo and pr_number:
+            try:
+                upsert_pr_comment(repo, pr_number, token, summary)
+            except Exception as exc:
+                print(f"::warning::carbon-budget-action: failed to post PR comment: {exc}")
 
     return 0 if (within or mode == "report") else 1
 

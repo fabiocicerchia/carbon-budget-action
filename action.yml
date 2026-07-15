@@ -42,6 +42,15 @@ inputs:
   mode:
     description: "gate (fail over budget) or report (never fail)"
     default: gate
+  base-gco2e:
+    description: Base-branch estimate (gCO2e) to render a Δ against
+    default: ""
+  pr-comment:
+    description: Post/update a PR comment with the summary (needs github-token)
+    default: "false"
+  github-token:
+    description: Token for posting the PR comment, e.g. ${{ github.token }}
+    default: ""
 outputs:
   estimated-gco2e:
     description: Estimated footprint in gCO2e
@@ -62,4 +71,7 @@ runs:
         MANIFEST_PATH: ${{ inputs.manifest-path }}
         HOURS: ${{ inputs.hours }}
         MODE: ${{ inputs.mode }}
+        BASE_GCO2E: ${{ inputs.base-gco2e }}
+        PR_COMMENT: ${{ inputs.pr-comment }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
       run: python ${{ github.action_path }}/carbon_budget.py
