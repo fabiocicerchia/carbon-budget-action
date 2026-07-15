@@ -33,6 +33,10 @@ Pass `manifest-path` instead of `replicas`/`cpu-request`/`memory-request` to
 read them straight from a k8s Deployment/StatefulSet manifest (first
 container's `requests:` block).
 
+Pass `em-zone` + `em-token` to fetch live grid intensity from
+[Electricity Maps](https://www.electricitymaps.com/) instead of the static
+`grid-intensity` input (falls back to it on any API error).
+
 ## Outputs
 
 | Output            | Description                       |

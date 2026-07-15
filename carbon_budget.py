@@ -48,6 +48,29 @@ def parse_manifest(text):
     return out
 
 
+def fetch_live_intensity(zone, token, timeout=15):
+    """Query Electricity Maps for the current carbon intensity of a zone.
+
+    Returns None on any failure (network, auth, unknown zone) so the caller
+    falls back to the static grid-intensity input instead of failing the gate
+    on an API hiccup. Uses stdlib urllib, not `requests` — see CLAUDE.md's
+    no-runtime-dependencies guardrail.
+    """
+    import json
+    import urllib.parse
+    import urllib.request
+
+    url = "https://api.electricitymap.org/v3/carbon-intensity/latest?" + urllib.parse.urlencode(
+        {"zone": zone}
+    )
+    req = urllib.request.Request(url, headers={"auth-token": token})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read()).get("carbonIntensity")
+    except Exception:
+        return None
+
+
 def parse_cpu(value):
     value = str(value).strip()
     return float(value[:-1]) / 1000 if value.endswith("m") else float(value)
@@ -101,6 +124,10 @@ def main():
         replicas = parsed.get("replicas", replicas)
         cpu = parsed.get("cpu", cpu)
         mem = parsed.get("memory", mem)
+
+    if (em_zone := os.environ.get("EM_ZONE")) and (em_token := os.environ.get("EM_TOKEN")):
+        if (live := fetch_live_intensity(em_zone, em_token)) is not None:
+            intensity = live
 
     est = estimate_gco2e(
         replicas, parse_cpu(cpu), parse_memory_gb(mem), hours, intensity

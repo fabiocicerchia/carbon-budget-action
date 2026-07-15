@@ -1,5 +1,9 @@
+import json
+from unittest.mock import MagicMock, patch
+
 from carbon_budget import (
     estimate_gco2e,
+    fetch_live_intensity,
     parse_cpu,
     parse_manifest,
     parse_memory_gb,
@@ -41,6 +45,19 @@ spec:
 
 def test_parse_manifest_missing_fields_return_empty_dict():
     assert parse_manifest("kind: ConfigMap\n") == {}
+
+
+def test_fetch_live_intensity_returns_value_on_success():
+    resp = MagicMock()
+    resp.read.return_value = json.dumps({"carbonIntensity": 42}).encode()
+    resp.__enter__.return_value = resp
+    with patch("urllib.request.urlopen", return_value=resp):
+        assert fetch_live_intensity("FR", "tok") == 42
+
+
+def test_fetch_live_intensity_falls_back_to_none_on_error():
+    with patch("urllib.request.urlopen", side_effect=OSError("boom")):
+        assert fetch_live_intensity("FR", "tok") is None
 
 
 def test_estimate_scales_linearly_with_replicas():

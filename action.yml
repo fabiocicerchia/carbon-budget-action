@@ -13,6 +13,15 @@ inputs:
   grid-intensity:
     description: gCO2e/kWh of the target region's grid (default world average)
     default: "480"
+  em-zone:
+    description: >-
+      Electricity Maps zone (e.g. FR, US-VA — same codes as
+      carbon-region-picker) to fetch live grid intensity for, overriding
+      grid-intensity. Requires em-token.
+    default: ""
+  em-token:
+    description: Electricity Maps API token, e.g. ${{ secrets.ELECTRICITYMAPS_TOKEN }}
+    default: ""
   replicas:
     description: Number of replicas the deployment will run
     default: "1"
@@ -45,6 +54,8 @@ runs:
       env:
         BUDGET_GCO2E: ${{ inputs.budget-gco2e }}
         GRID_INTENSITY: ${{ inputs.grid-intensity }}
+        EM_ZONE: ${{ inputs.em-zone }}
+        EM_TOKEN: ${{ inputs.em-token }}
         REPLICAS: ${{ inputs.replicas }}
         CPU_REQUEST: ${{ inputs.cpu-request }}
         MEMORY_REQUEST: ${{ inputs.memory-request }}
