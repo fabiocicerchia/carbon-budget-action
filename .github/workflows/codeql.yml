@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       security-events: write  # upload CodeQL results to the Security tab
+      actions: read
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       # yamllint disable-line rule:line-length
