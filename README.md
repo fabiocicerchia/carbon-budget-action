@@ -35,14 +35,6 @@ Cloud Carbon Footprint methodology, kept explainable: ~4 W per CPU core,
 live at the top of `carbon_budget.py`. `mode: report` posts the estimate
 without ever failing the build — the adoption on-ramp.
 
-## Status & roadmap
-
-- [x] Composite action, estimate + gate + job summary + outputs
-- [x] Read replicas/requests straight from the k8s manifests in the diff
-- [x] Live grid intensity (pairs with `carbon-region-picker`)
-- [x] PR comment with the delta vs the base branch (true "bundle-size" UX)
-- [x] Embodied-carbon amortization option
-
 ## Documentation
 
 Full docs live in [`docs/`](docs/); runnable examples in [`examples/`](examples/).
