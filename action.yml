@@ -60,11 +60,38 @@ inputs:
   embodied-lifetime-years:
     description: Expected hardware lifetime used to amortize embodied-gco2e
     default: "4"
+  track-budget:
+    description: >-
+      Error-budget mode: budget-gco2e applies to the window's running total
+      (burned-gco2e + this run's estimate), not just this run alone. Meant
+      for a deploy step, not a PR check — already-running workloads aren't
+      affected either way; this only decides whether *this* deploy proceeds.
+    default: "false"
+  burned-gco2e:
+    description: >-
+      gCO2e already burned in the current window — pass back this action's
+      own burned-gco2e output from the last run (same pattern as base-gco2e;
+      this action stores no state of its own).
+    default: "0"
+  window-start:
+    description: >-
+      ISO-8601 start of the current window — pass back this action's own
+      window-start output from the last run. Left empty (or once hours has
+      elapsed since it) the window resets and burned-gco2e starts over at 0.
+    default: ""
 outputs:
   estimated-gco2e:
     description: Estimated footprint in gCO2e
   within-budget:
     description: "true/false"
+  burned-gco2e:
+    description: >-
+      New running total for the window (only set when track-budget is true)
+      — persist and pass back in as burned-gco2e on the next run.
+  window-start:
+    description: >-
+      Window start to persist and pass back in as window-start on the next
+      run (only set when track-budget is true).
 runs:
   using: composite
   steps:
@@ -85,4 +112,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         EMBODIED_GCO2E: ${{ inputs.embodied-gco2e }}
         EMBODIED_LIFETIME_YEARS: ${{ inputs.embodied-lifetime-years }}
+        TRACK_BUDGET: ${{ inputs.track-budget }}
+        BURNED_GCO2E: ${{ inputs.burned-gco2e }}
+        WINDOW_START: ${{ inputs.window-start }}
       run: python ${{ github.action_path }}/carbon_budget.py

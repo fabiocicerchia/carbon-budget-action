@@ -13,6 +13,7 @@ Constants follow the Cloud Carbon Footprint methodology (avg server CPU
 import os
 import re
 import sys
+from datetime import datetime, timedelta, timezone
 
 W_PER_CORE = 4.0
 W_PER_GB = 0.4
@@ -138,7 +139,22 @@ def amortized_embodied_gco2e(embodied_gco2e_per_replica, lifetime_years, hours, 
     return embodied_gco2e_per_replica * (hours / lifetime_hours) * replicas
 
 
-def render(est, budget, replicas, cpu, mem, hours, intensity, base=None, embodied=0.0):
+def rollover_burn(burned_gco2e, window_start, hours, now=None):
+    """Error-budget style window rollover: carry `burned_gco2e` forward while
+    the window (started at `window_start`, `hours` long) is still open, reset
+    to 0 once it's elapsed. `window_start` is caller-supplied and persisted
+    across runs the same way `base-gco2e` already is — this action has no
+    storage of its own, see CLAUDE.md's no-runtime-dependencies guardrail.
+    """
+    now = now or datetime.now(timezone.utc)
+    if window_start:
+        started = datetime.fromisoformat(window_start.replace("Z", "+00:00"))
+        if now - started < timedelta(hours=hours):
+            return burned_gco2e, started
+    return 0.0, now
+
+
+def render(est, budget, replicas, cpu, mem, hours, intensity, base=None, embodied=0.0, burn=None):
     pct = est / budget * 100 if budget else 0
     bar = "█" * min(int(pct / 5), 20)
     status = "✅ within budget" if est <= budget else "❌ OVER BUDGET"
@@ -159,6 +175,15 @@ def render(est, budget, replicas, cpu, mem, hours, intensity, base=None, embodie
         arrow = "▲" if delta > 0 else "▼" if delta < 0 else "▬"
         pct_delta = delta / base * 100 if base else 0
         lines += ["", f"Δ vs base: {arrow} {delta:+,.0f} gCO2e ({pct_delta:+.0f}%)"]
+    if burn is not None:
+        total, window_start = burn
+        pct_b = total / budget * 100 if budget else 0
+        b_status = "✅ within budget" if total <= budget else "❌ BUDGET EXHAUSTED"
+        lines += [
+            "",
+            f"Window burn: **{total:,.0f} gCO2e** / budget {budget:,.0f} gCO2e "
+            f"({pct_b:.0f}%) {b_status} — window started {window_start.isoformat()}",
+        ]
     return "\n".join(lines)
 
 
@@ -192,9 +217,26 @@ def main():
         estimate_gco2e(replicas, parse_cpu(cpu), parse_memory_gb(mem), hours, intensity)
         + embodied
     )
-    within = est <= budget
     base = float(base_env) if (base_env := os.environ.get("BASE_GCO2E")) else None
-    summary = render(est, budget, replicas, cpu, mem, hours, intensity, base=base, embodied=embodied)
+
+    # Error-budget mode: caller passes back what a previous run output for
+    # BURNED_GCO2E/WINDOW_START (same pattern as BASE_GCO2E) so the budget
+    # applies to the window's running total, not just this one estimate —
+    # already-running workloads keep running either way, so this decides
+    # whether *this* deploy should proceed, not whether to tear anything down.
+    burn = None
+    tracking = os.environ.get("TRACK_BUDGET", "").lower() == "true"
+    if tracking:
+        carried, window_start = rollover_burn(
+            float(os.environ.get("BURNED_GCO2E", "0")), os.environ.get("WINDOW_START", ""), hours
+        )
+        total = carried + est
+        burn = (total, window_start)
+        within = total <= budget
+    else:
+        within = est <= budget
+
+    summary = render(est, budget, replicas, cpu, mem, hours, intensity, base=base, embodied=embodied, burn=burn)
     print(summary)
 
     if path := os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -204,6 +246,13 @@ def main():
         with open(path, "a") as fh:
             fh.write(f"estimated-gco2e={est:.0f}\n")
             fh.write(f"within-budget={'true' if within else 'false'}\n")
+            if burn is not None:
+                total, window_start = burn
+                # Skipped deploys shouldn't add their own footprint to the
+                # running total, only a deploy that actually goes ahead does.
+                carried_forward = total if within else total - est
+                fh.write(f"burned-gco2e={carried_forward:.0f}\n")
+                fh.write(f"window-start={window_start.isoformat()}\n")
 
     if os.environ.get("PR_COMMENT", "").lower() == "true":
         token = os.environ.get("GITHUB_TOKEN")

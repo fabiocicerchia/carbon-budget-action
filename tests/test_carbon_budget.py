@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 from carbon_budget import (
@@ -10,6 +11,7 @@ from carbon_budget import (
     parse_manifest,
     parse_memory_gb,
     render,
+    rollover_burn,
     upsert_pr_comment,
 )
 
@@ -108,6 +110,29 @@ def test_find_pr_number_reads_event_payload(tmp_path, monkeypatch):
 def test_find_pr_number_missing_path_returns_none(monkeypatch):
     monkeypatch.delenv("GITHUB_EVENT_PATH", raising=False)
     assert find_pr_number() is None
+
+
+def test_rollover_burn_no_window_start_starts_fresh():
+    now = datetime(2026, 7, 27, tzinfo=timezone.utc)
+    assert rollover_burn(3000, "", 720, now=now) == (0.0, now)
+
+
+def test_rollover_burn_carries_forward_within_window():
+    now = datetime(2026, 7, 27, tzinfo=timezone.utc)
+    started = now - timedelta(hours=100)
+    assert rollover_burn(3000, started.isoformat(), 720, now=now) == (3000, started)
+
+
+def test_rollover_burn_resets_once_window_elapsed():
+    now = datetime(2026, 7, 27, tzinfo=timezone.utc)
+    started = now - timedelta(hours=800)
+    assert rollover_burn(3000, started.isoformat(), 720, now=now) == (0.0, now)
+
+
+def test_render_shows_window_burn_status():
+    started = datetime(2026, 7, 1, tzinfo=timezone.utc)
+    out = render(1200, 2000, 2, "1", "1Gi", 720, 480, burn=(2500, started))
+    assert "BUDGET EXHAUSTED" in out and "2,500 gCO2e" in out
 
 
 def test_upsert_pr_comment_patches_existing_marker_comment():
