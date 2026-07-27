@@ -16,6 +16,7 @@ decision instead of a silent drift.
 - uses: fabiocicerchia/carbon-budget-action@v1
   with:
     budget-gco2e: 5000        # per month of runtime
+    hours: 720                # 30d — window the budget above applies to
     replicas: 4
     cpu-request: 500m
     memory-request: 1Gi
