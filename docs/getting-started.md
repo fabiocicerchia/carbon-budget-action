@@ -45,12 +45,100 @@ Pass `embodied-gco2e` (one replica's server's total manufacturing footprint)
 + `embodied-lifetime-years` (default 4) to amortize embodied carbon into the
 estimate, proportional to the run's `hours` over the hardware's lifetime.
 
+### Error-budget mode (`track-budget`)
+
+By default `budget-gco2e` is checked against *this run's* estimate alone —
+fine for a PR check on the diff, but blocking a PR doesn't stop whatever's
+already running in production from emitting. `track-budget: true` makes
+`budget-gco2e` apply to a running total for the window instead — an SRE
+error budget for carbon. Put it in the *deploy* job, not the PR check: once
+the window's budget is burned, this step fails and the deploy step (gated on
+it, e.g. `if: steps.budget.outcome == 'success'`) gets skipped until the
+window resets — it doesn't touch what's already deployed.
+
+This action keeps no state of its own (same as `base-gco2e`): pass its own
+`burned-gco2e` and `window-start` outputs from the previous deploy back in
+as inputs next time. Leave them unset on the first run; the window starts
+then, and resets automatically once `hours` has elapsed since.
+
+The `outcome == 'success'` check on the deploy step only works with the
+default `mode: gate` (this step needs to actually fail when the budget's
+burned). Under `mode: report` this step never fails, so check
+`steps.budget.outputs.within-budget == 'true'` instead.
+
+The example below persists state in the Actions cache instead of committing
+to the repo: `actions/cache` has no key-overwrite, so each run deletes the
+previous entry (via the `gh-actions-cache` CLI extension, which works under
+the default `GITHUB_TOKEN`'s `actions: write` permission — no extra token
+needed) and re-saves it. Two caveats: caches unused for 7 days are
+auto-evicted, silently resetting the window early if deploys are sparser
+than that; and without `concurrency`, two runs racing the same
+restore/delete/save can lose one's write, so the job pins itself to a single
+lane.
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: carbon-budget-state
+      cancel-in-progress: false
+    steps:
+      - uses: actions/cache/restore@v4
+        id: cache
+        with:
+          path: carbon-state.json
+          key: carbon-budget-state
+
+      - id: state
+        run: |
+          if [ -f carbon-state.json ]; then
+            echo "burned=$(jq -r .burned carbon-state.json)" >> "$GITHUB_OUTPUT"
+            echo "window-start=$(jq -r .window_start carbon-state.json)" >> "$GITHUB_OUTPUT"
+          else
+            echo "burned=0" >> "$GITHUB_OUTPUT"
+            echo "window-start=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - id: budget
+        continue-on-error: true
+        uses: fabiocicerchia/carbon-budget-action@v1
+        with:
+          budget-gco2e: 5000
+          hours: 720                      # 30d window
+          track-budget: true
+          burned-gco2e: ${{ steps.state.outputs.burned }}
+          window-start: ${{ steps.state.outputs.window-start }}
+          replicas: 4
+          cpu-request: 500m
+          memory-request: 1Gi
+
+      - if: steps.budget.outcome == 'success'
+        run: ./deploy.sh
+
+      - if: always() && steps.budget.outputs.burned-gco2e != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '{"burned":"${{ steps.budget.outputs.burned-gco2e }}","window_start":"${{ steps.budget.outputs.window-start }}"}' > carbon-state.json
+          gh extension install actions/gh-actions-cache 2>/dev/null || true
+          gh actions-cache delete carbon-budget-state --confirm || true
+
+      - if: always() && steps.budget.outputs.burned-gco2e != ''
+        uses: actions/cache/save@v4
+        with:
+          path: carbon-state.json
+          key: carbon-budget-state
+```
+
 ## Outputs
 
-| Output            | Description                       |
-| ----------------- | --------------------------------- |
-| `estimated-gco2e` | Estimated footprint in gCO2e      |
-| `within-budget`   | `true` / `false`                  |
+| Output             | Description                                          |
+| ------------------ | ----------------------------------------------------- |
+| `estimated-gco2e`  | Estimated footprint in gCO2e                           |
+| `within-budget`    | `true` / `false`                                       |
+| `burned-gco2e`     | New window running total (`track-budget: true` only)   |
+| `window-start`     | Window start to persist (`track-budget: true` only)    |
 
 ## Run locally
 
