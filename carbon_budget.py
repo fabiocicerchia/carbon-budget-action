@@ -68,7 +68,7 @@ def fetch_live_intensity(zone, token, timeout=15):
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read()).get("carbonIntensity")
-    except Exception:
+    except Exception:  # noqa: BLE001 — any failure falls back to the static input, see docstring
         return None
 
 
@@ -183,8 +183,10 @@ def render(
         "",
         f"`{bar}`",
         "",
-        f"Assumptions: {replicas} replica(s) × ({cpu} CPU, {mem}) × {hours}h, "
-        f"grid {intensity} gCO2e/kWh, PUE {PUE}.",
+        (
+            f"Assumptions: {replicas} replica(s) × ({cpu} CPU, {mem}) × {hours}h, "
+            f"grid {intensity} gCO2e/kWh, PUE {PUE}."
+        ),
     ]
     if embodied:
         lines.append(f"Includes {embodied:,.0f} gCO2e amortized embodied carbon.")
@@ -199,8 +201,10 @@ def render(
         b_status = "✅ within budget" if total <= budget else "❌ BUDGET EXHAUSTED"
         lines += [
             "",
-            f"Window burn: **{total:,.0f} gCO2e** / budget {budget:,.0f} gCO2e "
-            f"({pct_b:.0f}%) {b_status} — window started {window_start.isoformat()}",
+            (
+                f"Window burn: **{total:,.0f} gCO2e** / budget {budget:,.0f} gCO2e "
+                f"({pct_b:.0f}%) {b_status} — window started {window_start.isoformat()}"
+            ),
         ]
     return "\n".join(lines)
 
@@ -221,11 +225,12 @@ def main():
         cpu = parsed.get("cpu", cpu)
         mem = parsed.get("memory", mem)
 
-    if (em_zone := os.environ.get("EM_ZONE")) and (
-        em_token := os.environ.get("EM_TOKEN")
+    if (
+        (em_zone := os.environ.get("EM_ZONE"))
+        and (em_token := os.environ.get("EM_TOKEN"))
+        and (live := fetch_live_intensity(em_zone, em_token)) is not None
     ):
-        if (live := fetch_live_intensity(em_zone, em_token)) is not None:
-            intensity = live
+        intensity = live
 
     embodied = amortized_embodied_gco2e(
         float(os.environ.get("EMBODIED_GCO2E", "0")),
@@ -294,7 +299,7 @@ def main():
         if token and repo and pr_number:
             try:
                 upsert_pr_comment(repo, pr_number, token, summary)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 — a comment-posting failure shouldn't fail the gate
                 print(
                     f"::warning::carbon-budget-action: failed to post PR comment: {exc}"
                 )
