@@ -10,9 +10,12 @@ Constants follow the Cloud Carbon Footprint methodology (avg server CPU
 ~4 W/core busy-weighted, memory ~0.4 W/GB, PUE 1.2 for hyperscalers).
 """
 
+import json
 import os
 import re
 import sys
+import urllib.parse
+import urllib.request
 from datetime import datetime, timedelta, timezone
 
 W_PER_CORE = 4.0
@@ -57,10 +60,6 @@ def fetch_live_intensity(zone, token, timeout=15):
     on an API hiccup. Uses stdlib urllib, not `requests` — see CLAUDE.md's
     no-runtime-dependencies guardrail.
     """
-    import json
-    import urllib.parse
-    import urllib.request
-
     url = (
         "https://api.electricitymap.org/v3/carbon-intensity/latest?"
         + urllib.parse.urlencode({"zone": zone})
@@ -76,8 +75,6 @@ def fetch_live_intensity(zone, token, timeout=15):
 def find_pr_number():
     """Read the PR number out of the pull_request event payload GitHub points
     $GITHUB_EVENT_PATH at."""
-    import json
-
     event_path = os.environ.get("GITHUB_EVENT_PATH")
     if not event_path or not os.path.exists(event_path):
         return None
@@ -89,9 +86,6 @@ def find_pr_number():
 def upsert_pr_comment(repo, pr_number, token, body, timeout=15):
     """Create or update this action's PR comment (found via an HTML marker,
     so re-runs edit one comment instead of piling up new ones)."""
-    import json
-    import urllib.request
-
     marker = "<!-- carbon-budget-action -->"
     headers = {
         "Authorization": f"Bearer {token}",
