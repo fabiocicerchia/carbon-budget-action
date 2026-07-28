@@ -61,8 +61,9 @@ def fetch_live_intensity(zone, token, timeout=15):
     import urllib.parse
     import urllib.request
 
-    url = "https://api.electricitymap.org/v3/carbon-intensity/latest?" + urllib.parse.urlencode(
-        {"zone": zone}
+    url = (
+        "https://api.electricitymap.org/v3/carbon-intensity/latest?"
+        + urllib.parse.urlencode({"zone": zone})
     )
     req = urllib.request.Request(url, headers={"auth-token": token})
     try:
@@ -92,7 +93,10 @@ def upsert_pr_comment(repo, pr_number, token, body, timeout=15):
     import urllib.request
 
     marker = "<!-- carbon-budget-action -->"
-    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+    }
     list_url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
 
     req = urllib.request.Request(list_url, headers=headers)
@@ -100,11 +104,18 @@ def upsert_pr_comment(repo, pr_number, token, body, timeout=15):
         comments = json.loads(r.read())
     existing = next((c for c in comments if marker in c.get("body", "")), None)
 
-    url = f"https://api.github.com/repos/{repo}/issues/comments/{existing['id']}" if existing else list_url
+    url = (
+        f"https://api.github.com/repos/{repo}/issues/comments/{existing['id']}"
+        if existing
+        else list_url
+    )
     method = "PATCH" if existing else "POST"
     payload = json.dumps({"body": f"{marker}\n{body}"}).encode()
     req = urllib.request.Request(
-        url, data=payload, headers={**headers, "Content-Type": "application/json"}, method=method
+        url,
+        data=payload,
+        headers={**headers, "Content-Type": "application/json"},
+        method=method,
     )
     urllib.request.urlopen(req, timeout=timeout)
 
@@ -129,7 +140,9 @@ def estimate_gco2e(replicas, cpu_cores, memory_gb, hours, grid_intensity):
     return kwh * grid_intensity
 
 
-def amortized_embodied_gco2e(embodied_gco2e_per_replica, lifetime_years, hours, replicas):
+def amortized_embodied_gco2e(
+    embodied_gco2e_per_replica, lifetime_years, hours, replicas
+):
     """Allocate a share of each replica's underlying server's manufacturing
     (embodied) carbon to this run, proportional to hours run over the
     server's expected lifetime."""
@@ -154,7 +167,18 @@ def rollover_burn(burned_gco2e, window_start, hours, now=None):
     return 0.0, now
 
 
-def render(est, budget, replicas, cpu, mem, hours, intensity, base=None, embodied=0.0, burn=None):
+def render(
+    est,
+    budget,
+    replicas,
+    cpu,
+    mem,
+    hours,
+    intensity,
+    base=None,
+    embodied=0.0,
+    burn=None,
+):
     pct = est / budget * 100 if budget else 0
     bar = "█" * min(int(pct / 5), 20)
     status = "✅ within budget" if est <= budget else "❌ OVER BUDGET"
@@ -203,7 +227,9 @@ def main():
         cpu = parsed.get("cpu", cpu)
         mem = parsed.get("memory", mem)
 
-    if (em_zone := os.environ.get("EM_ZONE")) and (em_token := os.environ.get("EM_TOKEN")):
+    if (em_zone := os.environ.get("EM_ZONE")) and (
+        em_token := os.environ.get("EM_TOKEN")
+    ):
         if (live := fetch_live_intensity(em_zone, em_token)) is not None:
             intensity = live
 
@@ -228,7 +254,9 @@ def main():
     tracking = os.environ.get("TRACK_BUDGET", "").lower() == "true"
     if tracking:
         carried, window_start = rollover_burn(
-            float(os.environ.get("BURNED_GCO2E", "0")), os.environ.get("WINDOW_START", ""), hours
+            float(os.environ.get("BURNED_GCO2E", "0")),
+            os.environ.get("WINDOW_START", ""),
+            hours,
         )
         total = carried + est
         burn = (total, window_start)
@@ -236,7 +264,18 @@ def main():
     else:
         within = est <= budget
 
-    summary = render(est, budget, replicas, cpu, mem, hours, intensity, base=base, embodied=embodied, burn=burn)
+    summary = render(
+        est,
+        budget,
+        replicas,
+        cpu,
+        mem,
+        hours,
+        intensity,
+        base=base,
+        embodied=embodied,
+        burn=burn,
+    )
     print(summary)
 
     if path := os.environ.get("GITHUB_STEP_SUMMARY"):
@@ -262,7 +301,9 @@ def main():
             try:
                 upsert_pr_comment(repo, pr_number, token, summary)
             except Exception as exc:
-                print(f"::warning::carbon-budget-action: failed to post PR comment: {exc}")
+                print(
+                    f"::warning::carbon-budget-action: failed to post PR comment: {exc}"
+                )
 
     return 0 if (within or mode == "report") else 1
 
