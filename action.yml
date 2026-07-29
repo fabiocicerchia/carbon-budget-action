@@ -82,20 +82,25 @@ inputs:
 outputs:
   estimated-gco2e:
     description: Estimated footprint in gCO2e
+    value: ${{ steps.run.outputs.estimated-gco2e }}
   within-budget:
     description: "true/false"
+    value: ${{ steps.run.outputs.within-budget }}
   burned-gco2e:
     description: >-
       New running total for the window (only set when track-budget is true)
       — persist and pass back in as burned-gco2e on the next run.
+    value: ${{ steps.run.outputs.burned-gco2e }}
   window-start:
     description: >-
       Window start to persist and pass back in as window-start on the next
       run (only set when track-budget is true).
+    value: ${{ steps.run.outputs.window-start }}
 runs:
   using: composite
   steps:
-    - shell: bash
+    - id: run
+      shell: bash
       env:
         BUDGET_GCO2E: ${{ inputs.budget-gco2e }}
         GRID_INTENSITY: ${{ inputs.grid-intensity }}
