@@ -20,7 +20,7 @@ inputs:
       grid-intensity. Requires em-token.
     default: ""
   em-token:
-    description: Electricity Maps API token, e.g. ${{ secrets.ELECTRICITYMAPS_TOKEN }}
+    description: Electricity Maps API token, e.g. pass a repo secret holding it
     default: ""
   replicas:
     description: Number of replicas the deployment will run
@@ -49,7 +49,7 @@ inputs:
     description: Post/update a PR comment with the summary (needs github-token)
     default: "false"
   github-token:
-    description: Token for posting the PR comment, e.g. ${{ github.token }}
+    description: Token for posting the PR comment, e.g. pass the workflow's github.token
     default: ""
   embodied-gco2e:
     description: >-
