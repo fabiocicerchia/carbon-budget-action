@@ -23,11 +23,11 @@ jobs:
       # Config in release-please-config.json + .release-please-manifest.json.
       # "simple" tracks version.txt + CHANGELOG.md (language-agnostic).
       # yamllint disable-line rule:line-length
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7  # v5.0.0
         id: release
 
       # Only runs on the commit that merges the release PR.
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
         if: ${{ steps.release.outputs.release_created }}
 
       - name: Move floating major tag
