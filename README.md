@@ -35,6 +35,27 @@ Cloud Carbon Footprint methodology, kept explainable: ~4 W per CPU core,
 live at the top of `carbon_budget.py`. `mode: report` posts the estimate
 without ever failing the build — the adoption on-ramp.
 
+## Install
+
+Nothing to install — reference it from a workflow with `uses:`. See **Usage** below.
+
+## Usage
+
+```yaml
+# .github/workflows/carbon.yml
+name: carbon budget
+on: [pull_request]
+
+jobs:
+  carbon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fabiocicerchia/carbon-budget-action@v1
+        with:
+```
+
+More in [`docs/getting-started.md`](docs/getting-started.md).
+
 ## Documentation
 
 Full docs live in [`docs/`](docs/); runnable examples in [`examples/`](examples/).
