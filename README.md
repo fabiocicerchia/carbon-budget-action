@@ -3,6 +3,7 @@
 [![CI](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/ci.yml/badge.svg)](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/ci.yml)
 [![Security](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/security.yml/badge.svg)](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/security.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fabiocicerchia/carbon-budget-action/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fabiocicerchia/carbon-budget-action)
+[![CI carbon](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/gh-pages/badge.json)](.github/workflows/carbon-badge.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/fabiocicerchia/carbon-budget-action)](https://github.com/fabiocicerchia/carbon-budget-action/releases)
 
