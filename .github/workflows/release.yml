@@ -34,10 +34,11 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         env:
           MAJOR: v${{ steps.release.outputs.major }}
-          TAG: ${{ steps.release.outputs.tag_name }}
         run: |
           git config user.name "github-actions[bot]"
           BOT_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
           git config user.email "$BOT_EMAIL"
-          git tag -f "$MAJOR" "$TAG"
+          # HEAD is the commit release-please just tagged; a depth-1 checkout
+          # never fetched the tag itself, so tag HEAD rather than $tag_name.
+          git tag -f "$MAJOR"
           git push -f origin "$MAJOR"
