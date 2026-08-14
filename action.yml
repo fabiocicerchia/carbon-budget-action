@@ -22,6 +22,15 @@ inputs:
   em-token:
     description: Electricity Maps API token, e.g. pass a repo secret holding it
     default: ""
+  ci-api-area:
+    description: >-
+      ISO country code (IT, US, DEU) to fetch live grid intensity for from
+      ci-api.fabiocicerchia.it, overriding grid-intensity. Needs no
+      credentials. Append a bidding zone or balancing region to narrow it —
+      IT/SICI, SE/SE3, US/ERCO, AU/NSW1 — which falls back to the country when
+      that zone has no reading for the hour. Ignored when em-zone and em-token
+      are both set.
+    default: ""
   replicas:
     description: Number of replicas the deployment will run
     default: "1"
@@ -106,6 +115,7 @@ runs:
         GRID_INTENSITY: ${{ inputs.grid-intensity }}
         EM_ZONE: ${{ inputs.em-zone }}
         EM_TOKEN: ${{ inputs.em-token }}
+        CI_API_AREA: ${{ inputs.ci-api-area }}
         REPLICAS: ${{ inputs.replicas }}
         CPU_REQUEST: ${{ inputs.cpu-request }}
         MEMORY_REQUEST: ${{ inputs.memory-request }}
