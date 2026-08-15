@@ -37,6 +37,34 @@ Pass `em-zone` + `em-token` to fetch live grid intensity from
 [Electricity Maps](https://www.electricitymaps.com/) instead of the static
 `grid-intensity` input (falls back to it on any API error).
 
+Or pass `ci-api-area` alone — an ISO country code — to take it from
+[ci-api](https://ci-api.fabiocicerchia.it), which needs no credentials and
+covers every country with published electricity data. Append a bidding zone or
+balancing region to narrow it (`IT/SICI`, `SE/SE3`, `US/ERCO`, `AU/NSW1`); a
+zone with no reading for the hour falls back to its country. Electricity Maps
+wins when both are configured, and both fall back to `grid-intensity` on any
+API error.
+
+The figure used is `consumption_lifecycle` — upstream emissions plus the trade
+adjustment, the most complete of the four that API publishes. Its zone readings
+carry no consumption figures, the import adjustment being a national number
+that does not describe one bidding zone, so those report `lifecycle` instead.
+
+Two notes on that API, which is served as static objects with nothing in the
+request path:
+
+- It allows **1 request per 10s per IP** and answers `429` beyond that. A run
+  makes one request, so only the zone → country fallback comes near the limit,
+  and it waits the window out rather than spending its retry on a certain 429.
+- It carries **no freshness flag**, so this action applies its own rule: a
+  `measured` reading over 65 minutes old is refused (the hourly pipeline missed
+  a run) and `grid-intensity` stands in. An `annual-average` reading — the
+  fallback for a grid with no live feed — is *accepted*, because this action
+  projects over `hours` (720 by default), and a yearly average suits that
+  better than one hour's spot value. The freshness rule deliberately does not
+  bind those: annual readings are rewritten weekly, so an old timestamp on one
+  is expected. Which basis was priced is printed to the log.
+
 Pass `base-gco2e` (e.g. the `estimated-gco2e` output from a run on the base
 branch) to render a Δ, and `pr-comment: true` + `github-token: ${{ github.token }}`
 to post/update a PR comment with the summary instead of only the job summary.

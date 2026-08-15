@@ -14,6 +14,8 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -70,6 +72,94 @@ def fetch_live_intensity(zone, token, timeout=15):
             return json.loads(r.read()).get("carbonIntensity")
     except Exception:  # noqa: BLE001 — any failure falls back to the static input, see docstring
         return None
+
+
+# https://ci-api.fabiocicerchia.it — keyless, every country, plus the bidding
+# zones their operators publish.
+CI_API_BASE = "https://ci-api.fabiocicerchia.it"
+
+# The API is rate-limited to 1 request per 10s per IP, as a CDN rule that
+# answers 429 — there is no application in the request path to hold a limiter,
+# and so nothing to negotiate with. One run makes one request, so only the
+# zone -> country failover below ever comes near it, and it waits rather than
+# spending its one retry on a guaranteed 429.
+CI_API_RATE_LIMIT_S = 10
+
+# The pipeline behind the API runs hourly and the response carries no `stale`
+# flag, so the client decides. Binds measured readings only: an annual average
+# describes no particular hour, is rewritten weekly rather than hourly, and an
+# old generated_at on one is expected rather than a fault.
+CI_API_MAX_AGE_S = 65 * 60
+
+
+def _ci_api_get(path, timeout=15):
+    with urllib.request.urlopen(CI_API_BASE + path, timeout=timeout) as r:
+        return json.loads(r.read())
+
+
+def fetch_ci_api_intensity(area, timeout=15, sleep=time.sleep, now=None):
+    """Current grid carbon intensity for a country ("IT") or zone ("IT/SICI").
+
+    Returns `(gCO2e/kWh, basis)` or None, on the same contract as
+    fetch_live_intensity: any failure falls back to the static grid-intensity
+    input rather than failing the gate on an API hiccup.
+
+    Reports `consumption_lifecycle` — upstream emissions plus the trade
+    adjustment, the most complete of the four figures published and the one the
+    API tells clients to use. Zone readings carry no consumption figures, the
+    import adjustment being a national number that does not describe one
+    bidding zone, so they report `lifecycle`.
+
+    Unlike the other consumers of this API, an `annual-average` basis is
+    *accepted* here and not treated as staleness. This action projects a
+    deployment over `hours` — 720 by default, a month — and a yearly average is
+    a better input to that than the last hour's spot value. The distinction
+    still has to be made, because the freshness rule only binds measured
+    readings: annual ones are rewritten weekly, so an old `generated_at` on one
+    is expected rather than a missed pipeline run. The basis is returned so the
+    summary can say which of the two it priced with.
+    """
+    country, _, zone = area.strip().upper().partition("/")
+    if not country:
+        return None
+
+    payload = None
+    if zone:
+        try:
+            payload = _ci_api_get(f"/v1/zones/{country}/{zone}", timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                return None
+            # A zone drops out for any hour its provider had a bad minute, and
+            # nothing re-checks at request time, so a 404 means "ask the
+            # country instead" rather than "no such zone".
+            sleep(CI_API_RATE_LIMIT_S)
+        except Exception:  # noqa: BLE001 — see docstring
+            return None
+
+    if payload is None:
+        try:
+            payload = _ci_api_get(f"/v1/last-hour/{country}", timeout)
+        except Exception:  # noqa: BLE001 — see docstring
+            return None
+
+    basis = payload.get("basis")
+    if basis == "measured":
+        try:
+            generated = datetime.fromisoformat(
+                str(payload.get("generated_at")).replace("Z", "+00:00")
+            )
+        except ValueError:
+            return None
+        now = now or datetime.now(timezone.utc)
+        if (now - generated).total_seconds() > CI_API_MAX_AGE_S:
+            return None
+
+    for name in ("consumption_lifecycle", "lifecycle", "direct"):
+        value = payload.get(name)
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return float(value), basis
+    return None
 
 
 def find_pr_number():
@@ -225,12 +315,24 @@ def main():
         cpu = parsed.get("cpu", cpu)
         mem = parsed.get("memory", mem)
 
+    # Electricity Maps first when it is configured — naming a zone and a token
+    # is an explicit choice of source. ci-api needs no credentials, so it is
+    # the one that costs nothing to leave on.
     if (
         (em_zone := os.environ.get("EM_ZONE"))
         and (em_token := os.environ.get("EM_TOKEN"))
         and (live := fetch_live_intensity(em_zone, em_token)) is not None
     ):
         intensity = live
+    elif (ci_area := os.environ.get("CI_API_AREA")) and (
+        reading := fetch_ci_api_intensity(ci_area)
+    ) is not None:
+        intensity, basis = reading
+        print(
+            f"carbon-budget: {ci_area} at {intensity:.0f} gCO2e/kWh ({basis}) "
+            "from ci-api.fabiocicerchia.it",
+            file=sys.stderr,
+        )
 
     embodied = amortized_embodied_gco2e(
         float(os.environ.get("EMBODIED_GCO2E", "0")),
