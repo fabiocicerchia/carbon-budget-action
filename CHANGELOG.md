@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.1.2...v0.2.0) (2026-08-15)
+
+
+### Features
+
+* add ci-api-area, a keyless live grid-intensity source ([#31](https://github.com/fabiocicerchia/carbon-budget-action/issues/31)) ([6d77163](https://github.com/fabiocicerchia/carbon-budget-action/commit/6d77163c09879297ecd56f93affb821c93e64d39))
+
 ## [0.1.2](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.1.1...v0.1.2) (2026-08-13)
 
 
