@@ -1,0 +1,49 @@
+# Harness — carbon budget gate as a Run step in a CI stage.
+# Paste into the pipeline's YAML editor (Pipeline Studio -> YAML), or commit it
+# if the pipeline is stored in Git. A failed step fails the stage, and the
+# deploy stage after it never runs.
+pipeline:
+  name: carbon-budget
+  identifier: carbon_budget
+  projectIdentifier: YOUR_PROJECT_ID
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: Carbon budget
+        identifier: Carbon_budget
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Carbon budget
+                  identifier: carbon_budget
+                  spec:
+                    shell: Sh
+                    image: python:3.13-alpine
+                    envVariables:
+                      BUDGET_GCO2E: "5000"
+                      REPLICAS: "4"
+                      CPU_REQUEST: 500m
+                      MEMORY_REQUEST: 1Gi
+                      GRID_INTENSITY: "56" # eu-north-1; default 480
+                    command: |-
+                      wget -qO /tmp/carbon_budget.py \
+                        https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+                      # Exit 1 over budget in gate mode — that is the whole gate.
+                      python3 /tmp/carbon_budget.py
+  properties:
+    ci:
+      codebase:
+        connectorRef: YOUR_CODE_REPO_CONNECTOR_ID
+        repoName: YOUR_REPO_NAME
+        build: <+input>

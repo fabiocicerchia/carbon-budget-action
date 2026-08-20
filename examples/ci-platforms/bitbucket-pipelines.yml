@@ -1,0 +1,30 @@
+# Bitbucket Pipelines — carbon budget gate on every pull request.
+# Copy into bitbucket-pipelines.yml at the repo root.
+image: python:3.13-slim
+
+definitions:
+  steps:
+    - step: &carbon-budget
+        name: Carbon budget
+        script:
+          - >-
+            python3 -c "import urllib.request;urllib.request.urlretrieve('https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py','carbon_budget.py')"
+          # Exit 1 over budget in gate mode — that is the whole gate.
+          - python3 carbon_budget.py | tee carbon-budget.md
+        artifacts:
+          - carbon-budget.md
+
+pipelines:
+  pull-requests:
+    "**":
+      - step: *carbon-budget
+  # Reachable from Repository settings -> Pipelines -> Schedules if you want the
+  # estimate tracked over time rather than only on changes.
+  custom:
+    carbon-budget:
+      - step: *carbon-budget
+
+# Set the numbers as repository variables (Repository settings -> Repository
+# variables) so a budget change is a settings change, not a commit:
+#   BUDGET_GCO2E=5000  REPLICAS=4  CPU_REQUEST=500m  MEMORY_REQUEST=1Gi
+#   GRID_INTENSITY=56

@@ -1,0 +1,25 @@
+# Spacelift — carbon budget gate as a before_apply hook.
+# Copy into .spacelift/config.yml at the root of the stack's repository.
+#
+# before_apply is the right phase: the plan has already resolved what the
+# infrastructure will actually be, and nothing has been created yet. A hook
+# command exiting non-zero fails the run, so the apply never starts.
+version: "1"
+
+stack_defaults:
+  # The default runner image has no curl; anything with Python 3.10+ works.
+  runner_image: python:3.13-slim
+  environment:
+    BUDGET_GCO2E: "5000"
+    REPLICAS: "4"
+    CPU_REQUEST: "500m"
+    MEMORY_REQUEST: "1Gi"
+    GRID_INTENSITY: "56" # eu-north-1; default 480 (world average)
+
+stacks:
+  # Replace with your stack's ID (the slug in its Spacelift URL).
+  production-workloads:
+    before_apply:
+      - python3 -c "import urllib.request;urllib.request.urlretrieve('https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py','/tmp/carbon_budget.py')"
+      # Exit 1 over budget in gate mode — that is the whole gate.
+      - python3 /tmp/carbon_budget.py
