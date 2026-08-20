@@ -1,0 +1,27 @@
+{
+  "name": "carbon-budget",
+  "description": "Fails when the estimated footprint of this deploy exceeds its budget",
+  "billing": {
+    "deploymentPlan": "nf-compute-10"
+  },
+  "deployment": {
+    "external": {
+      "imagePath": "python:3.13-alpine"
+    },
+    "docker": {
+      "configType": "customCommand",
+      "customCommand": "sh -c 'wget -qO /tmp/carbon_budget.py https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py && python3 /tmp/carbon_budget.py'"
+    }
+  },
+  "settings": {
+    "backoffLimit": 0,
+    "activeDeadlineSeconds": 300
+  },
+  "runtimeEnvironment": {
+    "BUDGET_GCO2E": "5000",
+    "REPLICAS": "4",
+    "CPU_REQUEST": "500m",
+    "MEMORY_REQUEST": "1Gi",
+    "GRID_INTENSITY": "56"
+  }
+}

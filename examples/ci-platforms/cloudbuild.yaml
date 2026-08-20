@@ -1,0 +1,34 @@
+# Google Cloud Build — carbon budget gate as a build step.
+# Copy into cloudbuild.yaml at the repo root, then point a trigger at it:
+#   gcloud builds triggers create github --name=carbon-budget \
+#     --repo-name=REPO --repo-owner=OWNER --pull-request-pattern='^main$' \
+#     --build-config=cloudbuild.yaml
+steps:
+  - id: carbon-budget
+    name: python:3.13-slim
+    entrypoint: bash
+    env:
+      - BUDGET_GCO2E=5000
+      - REPLICAS=4
+      - CPU_REQUEST=500m
+      - MEMORY_REQUEST=1Gi
+      - GRID_INTENSITY=56 # eu-north-1; default 480 (world average)
+    args:
+      - -c
+      - |
+        python3 -c "import urllib.request;urllib.request.urlretrieve('https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py','/workspace/carbon_budget.py')"
+        # Exit 1 over budget in gate mode — a failing step fails the build.
+        python3 /workspace/carbon_budget.py | tee /workspace/carbon-budget.md
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# Keep the rendered summary next to the build.
+artifacts:
+  objects:
+    location: gs://${_ARTIFACT_BUCKET}/carbon-budget/${SHORT_SHA}/
+    paths:
+      - /workspace/carbon-budget.md
+
+substitutions:
+  _ARTIFACT_BUCKET: my-build-artifacts

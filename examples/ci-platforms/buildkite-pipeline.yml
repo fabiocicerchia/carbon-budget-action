@@ -1,0 +1,23 @@
+# Buildkite — carbon budget gate on every build.
+# Copy into .buildkite/pipeline.yml.
+steps:
+  - label: ":deciduous_tree: carbon budget"
+    key: carbon-budget
+    plugins:
+      - docker#v5.11.0:
+          image: python:3.13-slim
+          environment:
+            - BUDGET_GCO2E=5000
+            - REPLICAS=4
+            - CPU_REQUEST=500m
+            - MEMORY_REQUEST=1Gi
+            - GRID_INTENSITY=56 # eu-north-1; default 480 (world average)
+    command:
+      - >-
+        python3 -c "import urllib.request;urllib.request.urlretrieve('https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py','carbon_budget.py')"
+      # Exit 1 over budget in gate mode — that is the whole gate.
+      - python3 carbon_budget.py | tee carbon-budget.md
+      # The estimator's output is already markdown, so it renders as-is.
+      - buildkite-agent annotate --style info --context carbon-budget < carbon-budget.md
+    artifact_paths:
+      - carbon-budget.md
