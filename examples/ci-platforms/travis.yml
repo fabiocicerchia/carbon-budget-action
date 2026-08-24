@@ -1,0 +1,22 @@
+# Travis CI — carbon budget gate on every pull request.
+# Copy into .travis.yml.
+language: python
+python: "3.13"
+os: linux
+dist: jammy
+
+env:
+  global:
+    - BUDGET_GCO2E=5000
+    - REPLICAS=4
+    - CPU_REQUEST=500m
+    - MEMORY_REQUEST=1Gi
+    - GRID_INTENSITY=56 # eu-north-1; default 480 (world average)
+
+install:
+  - curl -fsSL -o carbon_budget.py
+    https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+
+# Exit 1 over budget in gate mode — that is the whole gate.
+script:
+  - python3 carbon_budget.py | tee carbon-budget.md

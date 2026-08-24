@@ -1,0 +1,64 @@
+# Argo Workflows — carbon budget gate as a workflow step.
+# argo submit argo-workflow.yaml, or keep it as a WorkflowTemplate and call it
+# from a release workflow with `templateRef`. A failed step stops the DAG, so
+# the deploy step below never runs.
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: carbon-budget-
+spec:
+  entrypoint: release
+  arguments:
+    parameters:
+      - name: budget-gco2e
+        value: "5000"
+      - name: grid-intensity # 56 = eu-north-1; 480 = world average
+        value: "56"
+      - name: replicas
+        value: "4"
+      - name: cpu-request
+        value: 500m
+      - name: memory-request
+        value: 1Gi
+  templates:
+    - name: release
+      dag:
+        tasks:
+          - name: carbon-budget
+            template: carbon-budget
+          - name: deploy
+            template: deploy
+            dependencies: [carbon-budget] # only runs if the gate passed
+
+    - name: carbon-budget
+      container:
+        image: python:3.13-alpine
+        command: [sh, -c]
+        args:
+          - >-
+            wget -qO /tmp/carbon_budget.py
+            https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+            && python3 /tmp/carbon_budget.py
+        env:
+          - name: BUDGET_GCO2E
+            value: "{{workflow.parameters.budget-gco2e}}"
+          - name: GRID_INTENSITY
+            value: "{{workflow.parameters.grid-intensity}}"
+          - name: REPLICAS
+            value: "{{workflow.parameters.replicas}}"
+          - name: CPU_REQUEST
+            value: "{{workflow.parameters.cpu-request}}"
+          - name: MEMORY_REQUEST
+            value: "{{workflow.parameters.memory-request}}"
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 200m, memory: 256Mi}
+
+    - name: deploy
+      container:
+        image: bitnami/kubectl:1.31
+        command: [sh, -c]
+        args: ["echo 'kubectl apply -f ... here'"]
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 200m, memory: 256Mi}

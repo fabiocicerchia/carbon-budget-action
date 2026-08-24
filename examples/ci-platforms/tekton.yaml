@@ -1,0 +1,68 @@
+# Tekton — carbon budget gate as a Task.
+# kubectl apply -f tekton.yaml, then reference the Task from a Pipeline ahead
+# of whatever applies the manifests. A failed TaskRun fails the PipelineRun,
+# so the deploy Task never runs.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: carbon-budget
+spec:
+  description: >-
+    Fails when the estimated carbon footprint of a deployment exceeds its
+    budget — bundle-size checks, but for carbon.
+  params:
+    - name: budget-gco2e
+      type: string
+      default: "5000"
+    - name: grid-intensity
+      description: gCO2e/kWh of the target region's grid (480 = world average)
+      type: string
+      default: "56"
+    - name: manifest-path
+      description: >-
+        Deployment/StatefulSet manifest in the workspace to read
+        replicas/cpu/memory requests from. Leave empty to use the
+        replicas/cpu/memory params instead.
+      type: string
+      default: ""
+    - name: replicas
+      type: string
+      default: "1"
+    - name: cpu-request
+      type: string
+      default: 500m
+    - name: memory-request
+      type: string
+      default: 512Mi
+  workspaces:
+    - name: source
+      description: The checkout holding the manifests
+      optional: true
+  steps:
+    - name: gate
+      image: python:3.13-alpine
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: BUDGET_GCO2E
+          value: $(params.budget-gco2e)
+        - name: GRID_INTENSITY
+          value: $(params.grid-intensity)
+        - name: MANIFEST_PATH
+          value: $(params.manifest-path)
+        - name: REPLICAS
+          value: $(params.replicas)
+        - name: CPU_REQUEST
+          value: $(params.cpu-request)
+        - name: MEMORY_REQUEST
+          value: $(params.memory-request)
+      # v1 renamed the step-level `resources` field to `computeResources`.
+      computeResources:
+        requests: {cpu: 100m, memory: 128Mi}
+        limits: {cpu: 200m, memory: 256Mi}
+      script: |
+        #!/bin/sh
+        set -eu
+        wget -qO /tmp/carbon_budget.py \
+          https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+        # Exit 1 over budget in gate mode — that is the whole gate.
+        python3 /tmp/carbon_budget.py

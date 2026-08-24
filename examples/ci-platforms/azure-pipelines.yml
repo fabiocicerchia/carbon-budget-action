@@ -1,0 +1,38 @@
+# Azure Pipelines — carbon budget gate on every pull request.
+# Copy into azure-pipelines.yml.
+trigger: none
+pr:
+  branches:
+    include: [main]
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  BUDGET_GCO2E: 5000
+  REPLICAS: 4
+  CPU_REQUEST: 500m
+  MEMORY_REQUEST: 1Gi
+  GRID_INTENSITY: 56 # eu-north-1; default 480 (world average)
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.13"
+
+  - script: |
+      curl -fsSL -o carbon_budget.py \
+        https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+    displayName: Fetch the estimator
+
+  # Exit 1 over budget in gate mode — that is the whole gate.
+  - script: python3 carbon_budget.py | tee "$(Build.ArtifactStagingDirectory)/carbon-budget.md"
+    displayName: Carbon budget
+
+  # The markdown the estimator prints is the same body the GitHub job summary
+  # gets — upload it so it survives the run.
+  - task: PublishPipelineArtifact@1
+    condition: always()
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)
+      artifact: carbon-budget

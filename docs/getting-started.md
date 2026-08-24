@@ -173,3 +173,27 @@ jobs:
 ```sh
 BUDGET_GCO2E=5000 REPLICAS=4 CPU_REQUEST=500m python carbon_budget.py
 ```
+
+## Other CI systems
+
+The action wrapper is GitHub-specific; the estimator is not. `carbon_budget.py`
+is stdlib-only Python 3.10+, takes its inputs from environment variables, and
+exits `1` when the estimate is over budget — which is all a gate needs anywhere:
+
+```sh
+curl -fsSL -o carbon_budget.py \
+  https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+BUDGET_GCO2E=5000 REPLICAS=4 CPU_REQUEST=500m MEMORY_REQUEST=1Gi \
+  GRID_INTENSITY=56 python3 carbon_budget.py
+```
+
+Every input above has an environment variable behind it, mapped mechanically:
+upper-case, dashes to underscores (`budget-gco2e` → `BUDGET_GCO2E`). Three
+inputs are GitHub-only and no-op elsewhere — `pr-comment`, and the
+`GITHUB_OUTPUT` / `GITHUB_STEP_SUMMARY` writes; the summary still goes to
+stdout as markdown.
+
+Drop-in files for GitLab CI, CircleCI, Travis, Azure DevOps, AWS CodePipeline,
+Devtron, Northflank, Spacelift, Jenkins, Bitbucket Pipelines, Google Cloud
+Build, Tekton, Argo Workflows, Harness, Buildkite and Drone/Woodpecker are in
+[`examples/ci-platforms/`](../examples/ci-platforms/README.md).

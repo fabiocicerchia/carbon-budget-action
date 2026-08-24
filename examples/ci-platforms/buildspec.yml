@@ -1,0 +1,34 @@
+# AWS CodePipeline / CodeBuild — carbon budget gate as a pipeline stage.
+# Copy into buildspec.yml at the repo root (or point the CodeBuild project at
+# it with `buildspec: examples/ci-platforms/buildspec.yml`).
+#
+# Wiring: Source stage (CodeConnections/CodeCommit) -> Build stage running this
+# CodeBuild project. A non-zero exit fails the build action, which fails the
+# stage, which stops the pipeline before it reaches Deploy.
+version: 0.2
+
+env:
+  variables:
+    BUDGET_GCO2E: "5000"
+    REPLICAS: "4"
+    CPU_REQUEST: "500m"
+    MEMORY_REQUEST: "1Gi"
+    # eu-north-1; default 480 (world average). Drop this and set
+    # CI_API_AREA=SE to price the deploy on the live Swedish grid instead.
+    GRID_INTENSITY: "56"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.13
+    commands:
+      - curl -fsSL -o carbon_budget.py
+        https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+  build:
+    commands:
+      # Exit 1 over budget in gate mode — that is the whole gate.
+      - python3 carbon_budget.py | tee carbon-budget.md
+
+artifacts:
+  files:
+    - carbon-budget.md

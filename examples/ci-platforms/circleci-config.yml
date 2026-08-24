@@ -1,0 +1,31 @@
+# CircleCI — carbon budget gate on every pull request.
+# Copy into .circleci/config.yml.
+version: 2.1
+
+jobs:
+  carbon-budget:
+    docker:
+      - image: cimg/python:3.13
+    environment:
+      BUDGET_GCO2E: "5000"
+      REPLICAS: "4"
+      CPU_REQUEST: 500m
+      MEMORY_REQUEST: 1Gi
+      GRID_INTENSITY: "56" # eu-north-1; default 480 (world average)
+    steps:
+      - run:
+          name: Fetch the estimator
+          command: |
+            curl -fsSL -o carbon_budget.py \
+              https://raw.githubusercontent.com/fabiocicerchia/carbon-budget-action/v0.2.0/carbon_budget.py
+      - run:
+          name: Carbon budget
+          # Exit 1 over budget in gate mode — that is the whole gate.
+          command: python3 carbon_budget.py | tee /tmp/carbon-budget.md
+      - store_artifacts:
+          path: /tmp/carbon-budget.md
+
+workflows:
+  pull-request:
+    jobs:
+      - carbon-budget
