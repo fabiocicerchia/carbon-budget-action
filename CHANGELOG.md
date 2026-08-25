@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.2.0...v0.3.0) (2026-08-25)
+
+
+### Features
+
+* **docs:** build the docs site in Actions and drop Read the Docs ([#37](https://github.com/fabiocicerchia/carbon-budget-action/issues/37)) ([9a4416b](https://github.com/fabiocicerchia/carbon-budget-action/commit/9a4416b4a5f9657157b03292b36665453f86bbee))
+
 ## [0.2.0](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.1.2...v0.2.0) (2026-08-15)
 
 
