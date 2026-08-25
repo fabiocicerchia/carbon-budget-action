@@ -196,4 +196,4 @@ stdout as markdown.
 Drop-in files for GitLab CI, CircleCI, Travis, Azure DevOps, AWS CodePipeline,
 Devtron, Northflank, Spacelift, Jenkins, Bitbucket Pipelines, Google Cloud
 Build, Tekton, Argo Workflows, Harness, Buildkite and Drone/Woodpecker are in
-[`examples/ci-platforms/`](../examples/ci-platforms/README.md).
+[`examples/ci-platforms/`](https://github.com/fabiocicerchia/carbon-budget-action/blob/main/examples/ci-platforms/README.md).
