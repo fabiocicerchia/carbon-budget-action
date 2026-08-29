@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.0...v0.3.1) (2026-08-29)
+
+
+### Bug Fixes
+
+* unblock quality and clear the Scorecard pinned-dependencies finding ([#42](https://github.com/fabiocicerchia/carbon-budget-action/issues/42)) ([3fea40d](https://github.com/fabiocicerchia/carbon-budget-action/commit/3fea40d1ae28e66db60e8f59253c89eeceaf94ca))
+
 ## [0.3.0](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.2.0...v0.3.0) (2026-08-25)
 
 
