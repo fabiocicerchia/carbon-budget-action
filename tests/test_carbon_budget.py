@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 from carbon_budget import (
     CI_API_MAX_AGE_S,
+    PR_COMMENT_MARKER,
     amortized_embodied_gco2e,
     estimate_gco2e,
     fetch_ci_api_intensity,
@@ -261,7 +262,7 @@ def test_render_shows_window_burn_status():
 def test_upsert_pr_comment_patches_existing_marker_comment():
     list_resp = MagicMock()
     list_resp.read.return_value = json.dumps(
-        [{"id": 7, "body": "<!-- carbon-budget-action -->\nold"}]
+        [{"id": 7, "body": f"{PR_COMMENT_MARKER}\nold"}]
     ).encode()
     list_resp.__enter__.return_value = list_resp
     patch_resp = MagicMock()
