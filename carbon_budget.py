@@ -24,6 +24,43 @@ W_PER_CORE = 4.0
 W_PER_GB = 0.4
 PUE = 1.2
 
+HOURS_PER_YEAR = 365 * 24
+
+# Every outbound call is a best-effort enrichment of the estimate, never a
+# precondition for it, so none of them may hold a CI job open for long.
+HTTP_TIMEOUT_S = 15
+
+EM_API_URL = "https://api.electricitymap.org/v3/carbon-intensity/latest"
+
+# https://ci-api.fabiocicerchia.it — keyless, every country, plus the bidding
+# zones their operators publish.
+CI_API_BASE = "https://ci-api.fabiocicerchia.it"
+
+# The API is rate-limited to 1 request per 10s per IP, as a CDN rule that
+# answers 429 — there is no application in the request path to hold a limiter,
+# and so nothing to negotiate with. One run makes one request, so only the
+# zone -> country failover below ever comes near it, and it waits rather than
+# spending its one retry on a guaranteed 429.
+CI_API_RATE_LIMIT_S = 10
+
+# The pipeline behind the API runs hourly and the response carries no `stale`
+# flag, so the client decides. Binds measured readings only: an annual average
+# describes no particular hour, is rewritten weekly rather than hourly, and an
+# old generated_at on one is expected rather than a fault.
+CI_API_MAX_AGE_S = 65 * 60
+
+GITHUB_API_BASE = "https://api.github.com"
+
+# Marks this action's own PR comment so a re-run edits it instead of piling up
+# a new one. Part of the contract between runs: changing it orphans every
+# comment already posted.
+PR_COMMENT_MARKER = "<!-- carbon-budget-action -->"
+
+# The summary's progress bar: one block per BAR_PCT_PER_BLOCK% of budget,
+# capped so a 900%-over estimate still renders a bar of readable width.
+BAR_PCT_PER_BLOCK = 5
+BAR_MAX_BLOCKS = 20
+
 
 def parse_manifest(text):
     """Pull replicas/cpu/memory requests out of a k8s Deployment/StatefulSet
@@ -54,7 +91,7 @@ def parse_manifest(text):
     return out
 
 
-def fetch_live_intensity(zone, token, timeout=15):
+def fetch_live_intensity(zone, token, timeout=HTTP_TIMEOUT_S):
     """Query Electricity Maps for the current carbon intensity of a zone.
 
     Returns None on any failure (network, auth, unknown zone) so the caller
@@ -62,10 +99,7 @@ def fetch_live_intensity(zone, token, timeout=15):
     on an API hiccup. Uses stdlib urllib, not `requests` — see CLAUDE.md's
     no-runtime-dependencies guardrail.
     """
-    url = (
-        "https://api.electricitymap.org/v3/carbon-intensity/latest?"
-        + urllib.parse.urlencode({"zone": zone})
-    )
+    url = EM_API_URL + "?" + urllib.parse.urlencode({"zone": zone})
     req = urllib.request.Request(url, headers={"auth-token": token})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -74,30 +108,12 @@ def fetch_live_intensity(zone, token, timeout=15):
         return None
 
 
-# https://ci-api.fabiocicerchia.it — keyless, every country, plus the bidding
-# zones their operators publish.
-CI_API_BASE = "https://ci-api.fabiocicerchia.it"
-
-# The API is rate-limited to 1 request per 10s per IP, as a CDN rule that
-# answers 429 — there is no application in the request path to hold a limiter,
-# and so nothing to negotiate with. One run makes one request, so only the
-# zone -> country failover below ever comes near it, and it waits rather than
-# spending its one retry on a guaranteed 429.
-CI_API_RATE_LIMIT_S = 10
-
-# The pipeline behind the API runs hourly and the response carries no `stale`
-# flag, so the client decides. Binds measured readings only: an annual average
-# describes no particular hour, is rewritten weekly rather than hourly, and an
-# old generated_at on one is expected rather than a fault.
-CI_API_MAX_AGE_S = 65 * 60
-
-
-def _ci_api_get(path, timeout=15):
+def _ci_api_get(path, timeout=HTTP_TIMEOUT_S):
     with urllib.request.urlopen(CI_API_BASE + path, timeout=timeout) as r:
         return json.loads(r.read())
 
 
-def fetch_ci_api_intensity(area, timeout=15, sleep=time.sleep, now=None):
+def fetch_ci_api_intensity(area, timeout=HTTP_TIMEOUT_S, sleep=time.sleep, now=None):
     """Current grid carbon intensity for a country ("IT") or zone ("IT/SICI").
 
     Returns `(gCO2e/kWh, basis)` or None, on the same contract as
@@ -173,28 +189,29 @@ def find_pr_number():
     return event.get("pull_request", {}).get("number") or event.get("number")
 
 
-def upsert_pr_comment(repo, pr_number, token, body, timeout=15):
+def upsert_pr_comment(repo, pr_number, token, body, timeout=HTTP_TIMEOUT_S):
     """Create or update this action's PR comment (found via an HTML marker,
     so re-runs edit one comment instead of piling up new ones)."""
-    marker = "<!-- carbon-budget-action -->"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
     }
-    list_url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+    list_url = f"{GITHUB_API_BASE}/repos/{repo}/issues/{pr_number}/comments"
 
     req = urllib.request.Request(list_url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         comments = json.loads(r.read())
-    existing = next((c for c in comments if marker in c.get("body", "")), None)
+    existing = next(
+        (c for c in comments if PR_COMMENT_MARKER in c.get("body", "")), None
+    )
 
     url = (
-        f"https://api.github.com/repos/{repo}/issues/comments/{existing['id']}"
+        f"{GITHUB_API_BASE}/repos/{repo}/issues/comments/{existing['id']}"
         if existing
         else list_url
     )
     method = "PATCH" if existing else "POST"
-    payload = json.dumps({"body": f"{marker}\n{body}"}).encode()
+    payload = json.dumps({"body": f"{PR_COMMENT_MARKER}\n{body}"}).encode()
     req = urllib.request.Request(
         url,
         data=payload,
@@ -232,7 +249,7 @@ def amortized_embodied_gco2e(
     server's expected lifetime."""
     if not embodied_gco2e_per_replica or not lifetime_years:
         return 0.0
-    lifetime_hours = lifetime_years * 365 * 24
+    lifetime_hours = lifetime_years * HOURS_PER_YEAR
     return embodied_gco2e_per_replica * (hours / lifetime_hours) * replicas
 
 
@@ -264,7 +281,7 @@ def render(
     burn=None,
 ):
     pct = est / budget * 100 if budget else 0
-    bar = "█" * min(int(pct / 5), 20)
+    bar = "█" * min(int(pct / BAR_PCT_PER_BLOCK), BAR_MAX_BLOCKS)
     status = "✅ within budget" if est <= budget else "❌ OVER BUDGET"
     lines = [
         "## 🌍 Carbon budget check",
