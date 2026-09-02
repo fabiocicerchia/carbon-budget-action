@@ -113,6 +113,47 @@ def _ci_api_get(path, timeout=HTTP_TIMEOUT_S):
         return json.loads(r.read())
 
 
+def _ci_api_payload(country, zone, timeout, sleep):
+    """The zone reading when one was asked for and exists, the country's
+    otherwise. None on any failure.
+
+    A zone drops out for any hour its provider had a bad minute, and nothing
+    re-checks at request time, so a 404 means "ask the country instead" rather
+    than "no such zone". That retry is a second request inside the API's
+    1-per-10s window, so it waits the window out first.
+    """
+    if zone:
+        try:
+            return _ci_api_get(f"/v1/zones/{country}/{zone}", timeout)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 404:
+                return None
+            sleep(CI_API_RATE_LIMIT_S)
+        except Exception:  # noqa: BLE001 — see fetch_ci_api_intensity's docstring
+            return None
+    try:
+        return _ci_api_get(f"/v1/last-hour/{country}", timeout)
+    except Exception:  # noqa: BLE001 — see fetch_ci_api_intensity's docstring
+        return None
+
+
+def _reading_is_fresh(payload, now=None):
+    """Whether a measured reading is recent enough to price with.
+
+    Nothing in the response says it is stale — the objects are static and
+    served with no application in the request path — so a missed hourly
+    pipeline run shows up only as an old `generated_at`.
+    """
+    try:
+        generated = datetime.fromisoformat(
+            str(payload.get("generated_at")).replace("Z", "+00:00")
+        )
+    except ValueError:
+        return False
+    now = now or datetime.now(timezone.utc)
+    return (now - generated).total_seconds() <= CI_API_MAX_AGE_S
+
+
 def fetch_ci_api_intensity(area, timeout=HTTP_TIMEOUT_S, sleep=time.sleep, now=None):
     """Current grid carbon intensity for a country ("IT") or zone ("IT/SICI").
 
@@ -139,37 +180,13 @@ def fetch_ci_api_intensity(area, timeout=HTTP_TIMEOUT_S, sleep=time.sleep, now=N
     if not country:
         return None
 
-    payload = None
-    if zone:
-        try:
-            payload = _ci_api_get(f"/v1/zones/{country}/{zone}", timeout)
-        except urllib.error.HTTPError as exc:
-            if exc.code != 404:
-                return None
-            # A zone drops out for any hour its provider had a bad minute, and
-            # nothing re-checks at request time, so a 404 means "ask the
-            # country instead" rather than "no such zone".
-            sleep(CI_API_RATE_LIMIT_S)
-        except Exception:  # noqa: BLE001 — see docstring
-            return None
-
+    payload = _ci_api_payload(country, zone, timeout, sleep)
     if payload is None:
-        try:
-            payload = _ci_api_get(f"/v1/last-hour/{country}", timeout)
-        except Exception:  # noqa: BLE001 — see docstring
-            return None
+        return None
 
     basis = payload.get("basis")
-    if basis == "measured":
-        try:
-            generated = datetime.fromisoformat(
-                str(payload.get("generated_at")).replace("Z", "+00:00")
-            )
-        except ValueError:
-            return None
-        now = now or datetime.now(timezone.utc)
-        if (now - generated).total_seconds() > CI_API_MAX_AGE_S:
-            return None
+    if basis == "measured" and not _reading_is_fresh(payload, now):
+        return None
 
     for name in ("consumption_lifecycle", "lifecycle", "direct"):
         value = payload.get(name)
@@ -316,6 +333,73 @@ def render(
     return "\n".join(lines)
 
 
+def resolve_grid_intensity(static_intensity):
+    """The grid intensity to price this run with: a live reading when one is
+    configured and answers, the static grid-intensity input otherwise.
+
+    Electricity Maps first when it is configured — naming a zone and a token
+    is an explicit choice of source. ci-api needs no credentials, so it is the
+    one that costs nothing to leave on.
+    """
+    em_zone = os.environ.get("EM_ZONE")
+    em_token = os.environ.get("EM_TOKEN")
+    if em_zone and em_token:
+        live = fetch_live_intensity(em_zone, em_token)
+        if live is not None:
+            return live
+
+    ci_area = os.environ.get("CI_API_AREA")
+    if ci_area:
+        reading = fetch_ci_api_intensity(ci_area)
+        if reading is not None:
+            intensity, basis = reading
+            print(
+                f"carbon-budget: {ci_area} at {intensity:.0f} gCO2e/kWh ({basis}) "
+                "from ci-api.fabiocicerchia.it",
+                file=sys.stderr,
+            )
+            return intensity
+
+    return static_intensity
+
+
+def emit_results(summary, est, within, burn):
+    """Write the job summary and the action's outputs to the files GitHub
+    points $GITHUB_STEP_SUMMARY and $GITHUB_OUTPUT at."""
+    if path := os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(path, "a") as fh:
+            fh.write(summary + "\n")
+    if path := os.environ.get("GITHUB_OUTPUT"):
+        with open(path, "a") as fh:
+            fh.write(f"estimated-gco2e={est:.0f}\n")
+            fh.write(f"within-budget={'true' if within else 'false'}\n")
+            if burn is not None:
+                total, window_start = burn
+                # Skipped deploys shouldn't add their own footprint to the
+                # running total, only a deploy that actually goes ahead does.
+                carried_forward = total if within else total - est
+                fh.write(f"burned-gco2e={carried_forward:.0f}\n")
+                fh.write(f"window-start={window_start.isoformat()}\n")
+
+
+def post_pr_comment(summary):
+    """Post or update the PR comment, when pr-comment is on and the token, the
+    repo and a PR number are all there. Never fails the gate: a comment that
+    didn't post is a warning, not a budget breach."""
+    if os.environ.get("PR_COMMENT", "").lower() != "true":
+        return
+    token = os.environ.get("GITHUB_TOKEN")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    pr_number = find_pr_number()
+    if not (token and repo and pr_number):
+        return
+    try:
+        upsert_pr_comment(repo, pr_number, token, summary)
+    except Exception as exc:  # noqa: BLE001 — a comment-posting failure shouldn't fail the gate
+        # A workflow command, so it stays on stdout where the runner reads it.
+        print(f"::warning::carbon-budget-action: failed to post PR comment: {exc}")
+
+
 def main():
     budget = float(os.environ["BUDGET_GCO2E"])
     intensity = float(os.environ.get("GRID_INTENSITY", "480"))
@@ -332,24 +416,7 @@ def main():
         cpu = parsed.get("cpu", cpu)
         mem = parsed.get("memory", mem)
 
-    # Electricity Maps first when it is configured — naming a zone and a token
-    # is an explicit choice of source. ci-api needs no credentials, so it is
-    # the one that costs nothing to leave on.
-    if (
-        (em_zone := os.environ.get("EM_ZONE"))
-        and (em_token := os.environ.get("EM_TOKEN"))
-        and (live := fetch_live_intensity(em_zone, em_token)) is not None
-    ):
-        intensity = live
-    elif (ci_area := os.environ.get("CI_API_AREA")) and (
-        reading := fetch_ci_api_intensity(ci_area)
-    ) is not None:
-        intensity, basis = reading
-        print(
-            f"carbon-budget: {ci_area} at {intensity:.0f} gCO2e/kWh ({basis}) "
-            "from ci-api.fabiocicerchia.it",
-            file=sys.stderr,
-        )
+    intensity = resolve_grid_intensity(intensity)
 
     embodied = amortized_embodied_gco2e(
         float(os.environ.get("EMBODIED_GCO2E", "0")),
@@ -395,33 +462,8 @@ def main():
         burn=burn,
     )
     print(summary)
-
-    if path := os.environ.get("GITHUB_STEP_SUMMARY"):
-        with open(path, "a") as fh:
-            fh.write(summary + "\n")
-    if path := os.environ.get("GITHUB_OUTPUT"):
-        with open(path, "a") as fh:
-            fh.write(f"estimated-gco2e={est:.0f}\n")
-            fh.write(f"within-budget={'true' if within else 'false'}\n")
-            if burn is not None:
-                total, window_start = burn
-                # Skipped deploys shouldn't add their own footprint to the
-                # running total, only a deploy that actually goes ahead does.
-                carried_forward = total if within else total - est
-                fh.write(f"burned-gco2e={carried_forward:.0f}\n")
-                fh.write(f"window-start={window_start.isoformat()}\n")
-
-    if os.environ.get("PR_COMMENT", "").lower() == "true":
-        token = os.environ.get("GITHUB_TOKEN")
-        repo = os.environ.get("GITHUB_REPOSITORY")
-        pr_number = find_pr_number()
-        if token and repo and pr_number:
-            try:
-                upsert_pr_comment(repo, pr_number, token, summary)
-            except Exception as exc:  # noqa: BLE001 — a comment-posting failure shouldn't fail the gate
-                print(
-                    f"::warning::carbon-budget-action: failed to post PR comment: {exc}"
-                )
+    emit_results(summary, est, within, burn)
+    post_pr_comment(summary)
 
     return 0 if (within or mode == "report") else 1
 
