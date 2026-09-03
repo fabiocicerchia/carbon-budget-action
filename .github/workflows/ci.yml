@@ -21,7 +21,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install ruff
-        run: pip install ruff
+        run: |
+          # Hash-pinned lockfile; regenerate after editing requirements-dev.in:
+          #   uv pip compile requirements-dev.in --generate-hashes \
+          #     --universal -p 3.10 -o requirements-dev.txt
+          pip install --require-hashes -r requirements-dev.txt
       - name: Ruff
         run: ruff check .
 
@@ -37,7 +41,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dev dependencies
-        run: pip install pytest requests
+        run: |
+          # Hash-pinned lockfile; regenerate after editing requirements-dev.in:
+          #   uv pip compile requirements-dev.in --generate-hashes \
+          #     --universal -p 3.10 -o requirements-dev.txt
+          pip install --require-hashes -r requirements-dev.txt
       - name: Pytest
         run: pytest -q
 
