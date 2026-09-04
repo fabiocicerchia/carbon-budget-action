@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.1...v0.3.2) (2026-09-04)
+
+
+### Bug Fixes
+
+* **ci:** pin the editorconfig-checker binary version ([#53](https://github.com/fabiocicerchia/carbon-budget-action/issues/53)) ([85da2f2](https://github.com/fabiocicerchia/carbon-budget-action/commit/85da2f2a0b3920b4db8f2cff8f073b3c1b1bced4))
+
 ## [0.3.1](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.0...v0.3.1) (2026-08-29)
 
 
