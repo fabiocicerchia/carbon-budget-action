@@ -20,24 +20,24 @@ fails builds you didn't change.
 
 ## Files
 
-| Platform | File | Copy it to |
-|---|---|---|
-| GitLab CI | [`gitlab-ci.yml`](gitlab-ci.yml) | `.gitlab-ci.yml` |
-| CircleCI | [`circleci-config.yml`](circleci-config.yml) | `.circleci/config.yml` |
-| Travis CI | [`travis.yml`](travis.yml) | `.travis.yml` |
-| Azure DevOps | [`azure-pipelines.yml`](azure-pipelines.yml) | `azure-pipelines.yml` |
-| AWS CodePipeline | [`buildspec.yml`](buildspec.yml) | `buildspec.yml` (CodeBuild stage) |
-| Devtron | [`devtron-task.sh`](devtron-task.sh) | a Pre-Deployment custom-script task |
-| Northflank | [`northflank-job.json`](northflank-job.json) | `northflank create job manual -f …` |
-| Spacelift | [`spacelift-config.yml`](spacelift-config.yml) | `.spacelift/config.yml` |
-| Jenkins | [`Jenkinsfile`](Jenkinsfile) | `Jenkinsfile` |
-| Bitbucket Pipelines | [`bitbucket-pipelines.yml`](bitbucket-pipelines.yml) | `bitbucket-pipelines.yml` |
-| Google Cloud Build | [`cloudbuild.yaml`](cloudbuild.yaml) | `cloudbuild.yaml` |
-| Tekton | [`tekton.yaml`](tekton.yaml) | `kubectl apply -f` |
-| Argo Workflows | [`argo-workflow.yaml`](argo-workflow.yaml) | `argo submit` |
-| Harness | [`harness-pipeline.yml`](harness-pipeline.yml) | the pipeline's YAML editor |
-| Buildkite | [`buildkite-pipeline.yml`](buildkite-pipeline.yml) | `.buildkite/pipeline.yml` |
-| Drone / Woodpecker | [`drone.yml`](drone.yml) | `.drone.yml` / `.woodpecker.yml` |
+| Platform            | File                                                 | Copy it to                          |
+| ------------------- | ---------------------------------------------------- | ----------------------------------- |
+| GitLab CI           | [`gitlab-ci.yml`](gitlab-ci.yml)                     | `.gitlab-ci.yml`                    |
+| CircleCI            | [`circleci-config.yml`](circleci-config.yml)         | `.circleci/config.yml`              |
+| Travis CI           | [`travis.yml`](travis.yml)                           | `.travis.yml`                       |
+| Azure DevOps        | [`azure-pipelines.yml`](azure-pipelines.yml)         | `azure-pipelines.yml`               |
+| AWS CodePipeline    | [`buildspec.yml`](buildspec.yml)                     | `buildspec.yml` (CodeBuild stage)   |
+| Devtron             | [`devtron-task.sh`](devtron-task.sh)                 | a Pre-Deployment custom-script task |
+| Northflank          | [`northflank-job.json`](northflank-job.json)         | `northflank create job manual -f …` |
+| Spacelift           | [`spacelift-config.yml`](spacelift-config.yml)       | `.spacelift/config.yml`             |
+| Jenkins             | [`Jenkinsfile`](Jenkinsfile)                         | `Jenkinsfile`                       |
+| Bitbucket Pipelines | [`bitbucket-pipelines.yml`](bitbucket-pipelines.yml) | `bitbucket-pipelines.yml`           |
+| Google Cloud Build  | [`cloudbuild.yaml`](cloudbuild.yaml)                 | `cloudbuild.yaml`                   |
+| Tekton              | [`tekton.yaml`](tekton.yaml)                         | `kubectl apply -f`                  |
+| Argo Workflows      | [`argo-workflow.yaml`](argo-workflow.yaml)           | `argo submit`                       |
+| Harness             | [`harness-pipeline.yml`](harness-pipeline.yml)       | the pipeline's YAML editor          |
+| Buildkite           | [`buildkite-pipeline.yml`](buildkite-pipeline.yml)   | `.buildkite/pipeline.yml`           |
+| Drone / Woodpecker  | [`drone.yml`](drone.yml)                             | `.drone.yml` / `.woodpecker.yml`    |
 
 For GitHub Actions use the action itself — see [`../basic/`](../basic/) and
 [`../error-budget/`](../error-budget/).
@@ -67,10 +67,10 @@ Three of the action's outputs are GitHub-only plumbing and no-ops elsewhere:
 API). Everywhere else, the summary goes to **stdout** as markdown and the
 verdict is the **exit code**:
 
-| exit | meaning |
-|---|---|
-| `0` | within budget, or `MODE=report` |
-| `1` | over budget in `gate` mode |
+| exit | meaning                         |
+| ---- | ------------------------------- |
+| `0`  | within budget, or `MODE=report` |
+| `1`  | over budget in `gate` mode      |
 
 Most of the files below `tee` that markdown into an artifact, since a summary
 that only exists in a log line is a summary nobody reads.
