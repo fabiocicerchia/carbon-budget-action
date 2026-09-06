@@ -9,13 +9,15 @@ You need Python 3.10+ and `make`. The action is a composite GitHub Action
 (`action.yml`) that wraps `carbon_budget.py`.
 
 1. Fork and clone the repo.
-1. `make setup` — install git hooks + pre-commit.
-1. `make dev` — install dev tooling (pytest, ruff, requests).
+1. `make setup` — dev dependencies from `requirements-dev.txt`, plus the
+   pre-commit hook.
 1. Create a branch: `git checkout -b feat/short-description`.
 
 ```sh
-make lint    # ruff check .
+make lint    # pre-commit run --all-files — the whole gate
 make test    # pytest -q
+make format  # ruff format .
+make run     # BUDGET_GCO2E=5000 make run
 ```
 
 To try the action end-to-end, push a branch and let the `self-test` job in

@@ -14,21 +14,24 @@ and the job summary are written via `$GITHUB_OUTPUT` / `$GITHUB_STEP_SUMMARY`.
 ## Commands
 
 ```sh
-# setup: make setup    # install git hooks + pre-commit
-# dev:   make dev      # install pytest, ruff, requests
-# test:  make test     # pytest -q
-# lint:  make lint     # ruff check .
-# run:   BUDGET_GCO2E=5000 python carbon_budget.py
-make help    # Show this help
-make setup   # Install the pre-commit hook
-make dev     # Install dev dependencies
-make lint    # Run ruff
-make test    # Run tests
+make help     # Show this help
+make setup    # Dev dependencies from requirements-dev.txt + the pre-commit hook
+make run      # BUDGET_GCO2E=... make run — the estimator, locally
+make test     # pytest -q
+make lint     # pre-commit run --all-files — the whole gate
+make format   # ruff format .
+make analyze  # trivy fs
 ```
+
+`install` and `build` are declared no-ops here (FC-GEN-058): an action is
+referenced from a workflow, not installed, and a composite action has nothing
+to compile.
 
 ## Tooling
 
-- `make setup` installs the pre-commit hook, and that is the whole of it.
+- `make setup` installs the dev dependencies from `requirements-dev.txt`
+  and the pre-commit hook. It replaced a separate `dev` target that carried
+  its own hardcoded package list, which could disagree with the lockfile.
   Don't add a `.githooks/` directory: `core.hooksPath` replaces `.git/hooks/`
   wholesale, so setting it silently stops every pre-commit hook from running.
 - Hooks are pinned by commit SHA with the tag in a trailing comment. A tag can
