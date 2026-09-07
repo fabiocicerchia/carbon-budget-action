@@ -20,7 +20,7 @@ no runtime dependency.
 
 Cloud Carbon Footprint methodology, kept explainable. Per replica:
 
-```
+```text
 energy_kWh  = (cpu_cores * W_PER_CORE + memory_gb * W_PER_GB)
               * PUE * hours / 1000
 gco2e       = energy_kWh * grid_intensity * replicas
@@ -34,7 +34,7 @@ underlying server's manufacturing footprint over its expected lifetime.
 
 ## Data flow
 
-```
+```text
 inputs (action.yml) → env vars → carbon_budget.py → gCO2e estimate
     → compare to budget → job summary + outputs → pass/fail exit code
 ```

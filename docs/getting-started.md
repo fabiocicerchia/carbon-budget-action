@@ -70,7 +70,8 @@ branch) to render a Δ, and `pr-comment: true` + `github-token: ${{ github.token
 to post/update a PR comment with the summary instead of only the job summary.
 
 Pass `embodied-gco2e` (one replica's server's total manufacturing footprint)
-+ `embodied-lifetime-years` (default 4) to amortize embodied carbon into the
+
+- `embodied-lifetime-years` (default 4) to amortize embodied carbon into the
 estimate, proportional to the run's `hours` over the hardware's lifetime.
 
 ### Error-budget mode (`track-budget`)
@@ -161,12 +162,12 @@ jobs:
 
 ## Outputs
 
-| Output             | Description                                          |
-| ------------------ | ----------------------------------------------------- |
-| `estimated-gco2e`  | Estimated footprint in gCO2e                           |
-| `within-budget`    | `true` / `false`                                       |
-| `burned-gco2e`     | New window running total (`track-budget: true` only)   |
-| `window-start`     | Window start to persist (`track-budget: true` only)    |
+| Output            | Description                                          |
+| ----------------- | ---------------------------------------------------- |
+| `estimated-gco2e` | Estimated footprint in gCO2e                         |
+| `within-budget`   | `true` / `false`                                     |
+| `burned-gco2e`    | New window running total (`track-budget: true` only) |
+| `window-start`    | Window start to persist (`track-budget: true` only)  |
 
 ## Run locally
 
