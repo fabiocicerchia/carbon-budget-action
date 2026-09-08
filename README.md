@@ -68,14 +68,14 @@ help` lists every target. Every repository in this estate exposes the same
 eight verbs, so you do not have to read a Makefile to find out how to test it
 (FC-GEN-057).
 
-| Verb      | What it does here                                        |
-| --------- | -------------------------------------------------------- |
-| `setup`   | `requirements-dev.txt` + the pre-commit hook             |
-| `run`     | The estimator locally: `BUDGET_GCO2E=5000 make run`      |
-| `test`    | `pytest -q`                                              |
-| `lint`    | `pre-commit run --all-files` — the whole gate            |
-| `format`  | `ruff format .`                                          |
-| `analyze` | `trivy fs` — vulnerabilities, misconfig, secrets         |
+| Verb      | What it does here                                   |
+| --------- | --------------------------------------------------- |
+| `setup`   | `requirements-dev.txt` + the pre-commit hook        |
+| `run`     | The estimator locally: `BUDGET_GCO2E=5000 make run` |
+| `test`    | `pytest -q`                                         |
+| `lint`    | `pre-commit run --all-files` — the whole gate       |
+| `format`  | `ruff format .`                                     |
+| `analyze` | `trivy fs` — vulnerabilities, misconfig, secrets    |
 
 ### Not applicable
 
