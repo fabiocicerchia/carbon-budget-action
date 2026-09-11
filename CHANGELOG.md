@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.2...v0.3.3) (2026-09-11)
+
+
+### Bug Fixes
+
+* **release:** let the release PR carry a token that isn't GITHUB_TOKEN ([#65](https://github.com/fabiocicerchia/carbon-budget-action/issues/65)) ([28837c7](https://github.com/fabiocicerchia/carbon-budget-action/commit/28837c756a698269da9613a0e93fc183e63f118b))
+
 ## [0.3.2](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.1...v0.3.2) (2026-09-08)
 
 
