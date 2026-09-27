@@ -1,0 +1,11 @@
+[default]
+# release-please writes each CHANGELOG entry with a markdown link whose label is
+# the abbreviated commit SHA — "([f5afe43](https://github.com/…/commit/…))" — and
+# typos reads that hex string as a word: f5afe43 contains "afe", which it
+# corrects to "safe". The SHA is generated, so it cannot be reworded, and the
+# release branch is force-pushed, so it cannot be fixed there either.
+#
+# Ignoring SHA-shaped link labels rather than excluding CHANGELOG.md keeps the
+# rest of the file spell-checked — verified: a "recieve" added to it is still
+# caught with this rule in place.
+extend-ignore-re = ["\\[[0-9a-f]{7,40}\\]"]
