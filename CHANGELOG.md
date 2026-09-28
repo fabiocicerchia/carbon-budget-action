@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.3...v0.3.4) (2026-09-28)
+
+
+### Bug Fixes
+
+* **ci:** keep actions: read on the job that uploads sarif ([#77](https://github.com/fabiocicerchia/carbon-budget-action/issues/77)) ([f5afe43](https://github.com/fabiocicerchia/carbon-budget-action/commit/f5afe439932c4e029372f390e9a1a7256b5584dd))
+* **ci:** typos reads a release CHANGELOG's commit SHA as prose ([#82](https://github.com/fabiocicerchia/carbon-budget-action/issues/82)) ([78f689a](https://github.com/fabiocicerchia/carbon-budget-action/commit/78f689a00a3856f57809e280dc2122b195b73de7))
+
 ## [0.3.3](https://github.com/fabiocicerchia/carbon-budget-action/compare/v0.3.2...v0.3.3) (2026-09-11)
 
 
