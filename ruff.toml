@@ -1,0 +1,2 @@
+# Oldest Python CI tests; ruff 0.17 defaults to 3.11 and would suggest 3.11-only APIs.
+target-version = "py310"
