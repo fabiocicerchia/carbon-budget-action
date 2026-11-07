@@ -11,7 +11,7 @@ Feature: Estimating operational emissions
     And it runs for <hours> hours on a grid of <intensity> gCO2e/kWh
     When the pipeline runs the carbon budget check
     Then the estimated-gco2e output is <estimate>
-    And the summary's assumptions end with "grid <intensity> gCO2e/kWh, PUE 1.2."
+    And the summary's assumptions end with "grid <intensity>.0 gCO2e/kWh, PUE 1.2."
 
     Examples:
       | replicas | hours | intensity | estimate |

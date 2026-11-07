@@ -9,7 +9,7 @@ Feature: Documentation site look and feel
   Scenario: The docs and the splash page share the green GreenOps accent
     Given the project belongs to the GreenOps family
     When a reader opens the rendered docs and the splash page
-    Then the header, links and primary buttons of the docs use the green accent pair #34d399 / #059669
+    Then the links, primary buttons and home hero of the docs use the green accent pair #34d399 / #059669
     And the splash page uses the same accent pair
     And the light and dark colour schemes use the same accent pair
 

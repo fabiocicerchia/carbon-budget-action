@@ -15,7 +15,7 @@ Feature: Tracking a rolling carbon budget
     When the pipeline runs the carbon budget check
     Then the within-budget output is <within>
     And the burned-gco2e output is <burned_out>
-    And the window-start output is unchanged
+    And the window-start output is the same start time that was passed in
     And the summary shows "Window burn: **<total> gCO2e** / budget 5,000 gCO2e" and "<status>"
 
     Examples:

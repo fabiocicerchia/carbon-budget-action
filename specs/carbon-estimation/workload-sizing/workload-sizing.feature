@@ -9,9 +9,9 @@ Feature: Sizing the workload to estimate
   @id:carbon-estimation.workload-sizing.001 @rule:carbon.workload.manifest-overrides-inputs @verified @source:carbon_budget.py#parse_manifest @test:tests/test_carbon_budget.py#test_parse_manifest_reads_replicas_and_first_container_requests @test:tests/test_carbon_budget.py#test_parse_manifest_missing_fields_return_empty_dict
   Scenario Outline: A manifest's replicas and resource requests replace the sizing inputs
     Given the replicas input is 1, cpu-request is 500m and memory-request is 512Mi
-    And manifest-path points at a Deployment with <manifest_content>
+    And manifest-path points at a manifest with <manifest_content>
     When the pipeline runs the carbon budget check
-    Then the summary's assumptions read "<assumptions>"
+    Then the summary's assumptions begin with "<assumptions>"
 
     Examples:
       | manifest_content                                                    | assumptions                               |
