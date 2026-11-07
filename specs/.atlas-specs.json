@@ -1,0 +1,688 @@
+{
+ "excluded": {
+  "carbon-budget-action/carbon-budget": [
+   {
+    "candidate": "Outbound HTTP calls time out after 15 seconds",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "carbon_budget.py#HTTP_TIMEOUT_S"
+   },
+   {
+    "candidate": "CI API request paths /v1/zones/{country}/{zone} and /v1/last-hour/{country}",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "carbon_budget.py#_ci_api_payload"
+   },
+   {
+    "candidate": "Non-404 zone error falls straight back to the static intensity",
+    "covered_by": "grid.source.precedence-and-fallback",
+    "reason": "DUPLICATE_OF",
+    "source": "carbon_budget.py#_ci_api_payload"
+   },
+   {
+    "candidate": "Blank ci-api-area makes no request",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "carbon_budget.py#fetch_ci_api_intensity"
+   },
+   {
+    "candidate": "Area codes are upper-cased (it, IT/sici)",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "carbon_budget.py#fetch_ci_api_intensity"
+   },
+   {
+    "candidate": "PR number read from pull_request.number or top-level number in the event payload",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "carbon_budget.py#find_pr_number"
+   },
+   {
+    "candidate": "Electricity Maps token sent as auth-token header",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "carbon_budget.py#fetch_live_intensity"
+   },
+   {
+    "candidate": "Summary printed to stdout as well as the job summary",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "carbon_budget.py#main"
+   },
+   {
+    "candidate": "Missing budget aborts the run",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "carbon_budget.py#main"
+   },
+   {
+    "candidate": "Configuring the estimator through environment variables on any runner",
+    "covered_by": "carbon.operational.default-workload",
+    "reason": "DUPLICATE_OF",
+    "source": "carbon_budget.py#main"
+   }
+  ],
+  "carbon-budget-action/makefile": [
+   {
+    "candidate": "Running `make` with no target prints the list of targets and their descriptions (help is the default goal)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#help"
+   },
+   {
+    "candidate": "`make setup` installs dev dependencies from requirements-dev.txt and installs the pre-commit hook",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#setup"
+   },
+   {
+    "candidate": "`make run` runs carbon_budget.py locally with BUDGET_GCO2E defaulting to 5000 gCO2e when not set",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#run"
+   },
+   {
+    "candidate": "`make test` runs pytest quietly",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#test"
+   },
+   {
+    "candidate": "`make lint` runs every pre-commit hook over all files, mirroring the CI gate",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#lint"
+   },
+   {
+    "candidate": "`make format` formats the tree with ruff",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#format"
+   },
+   {
+    "candidate": "`make analyze` runs trivy fs for CRITICAL/HIGH vulns, misconfig and secrets, and exits 69 with an install hint when trivy is missing",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#analyze"
+   },
+   {
+    "candidate": "`make install` is a declared no-op that exits 0 and explains the action is referenced, not installed",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#install"
+   },
+   {
+    "candidate": "`make build` is a declared no-op that exits 0 and explains nothing is compiled for a composite action",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#build"
+   }
+  ],
+  "docs/stylesheets": [
+   {
+    "candidate": "Header is translucent with blur and a hairline divider; shadow on scroll",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-header"
+   },
+   {
+    "candidate": "Heading weights, letter-spacing and kerning",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset h1"
+   },
+   {
+    "candidate": "Rounded, bordered code blocks",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .highlight"
+   },
+   {
+    "candidate": "Pill buttons with hover lift and gradient primary button",
+    "covered_by": "docs.styling.shared-greenops-accent",
+    "reason": "DUPLICATE_OF",
+    "source": "docs/stylesheets/extra.css#.md-typeset .md-button"
+   },
+   {
+    "candidate": "Home hero gradient title and tagline layout",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .hero"
+   },
+   {
+    "candidate": "Feature cards with hover lift and accent-coloured icons",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .grid.cards > ul > li"
+   },
+   {
+    "candidate": "Dark (slate) scheme background colours for page, header and tabs",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#[data-md-color-scheme=\"slate\"]"
+   },
+   {
+    "candidate": "Sidebar nav and footer weights/colours, smooth scrolling",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-nav__title"
+   }
+  ],
+  "examples/ci-platforms": [
+   {
+    "candidate": "Estimator is downloaded to /tmp/carbon_budget.py and run with python3",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "Placement on Pre-Build instead of Pre-Deployment to gate at CI time",
+    "covered_by": "ci.devtron.over-budget-blocks-deployment",
+    "reason": "DUPLICATE_OF",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "Unset variables abort the script (set -u)",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "Grid intensity comment 56 = eu-north-1",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "A deployment over its carbon budget is stopped at the pre-deployment stage",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "Task input variables override the sample workload figures",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "The deployment is blocked when the estimator cannot be downloaded",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   },
+   {
+    "candidate": "The task always runs the same released estimator version",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "examples/ci-platforms/devtron-task.sh#devtron-task.sh"
+   }
+  ]
+ },
+ "lifted": {
+  "carbon-budget-action/carbon-budget": [],
+  "carbon-budget-action/makefile": [],
+  "docs/stylesheets": [],
+  "examples/ci-platforms": [
+   {
+    "from_source": "carbon_budget.py#main",
+    "rule": "ci.devtron.over-budget-blocks-deployment"
+   },
+   {
+    "from_source": "carbon_budget.py#main",
+    "rule": "ci.devtron.rendered-chart-sizes-workload"
+   }
+  ]
+ },
+ "retired": [],
+ "scenarios": {
+  "budget-enforcement.baseline-comparison.001": {
+   "file": "specs/budget-enforcement/baseline-comparison/baseline-comparison.feature",
+   "fingerprint": "929bb27eff0b",
+   "human": false,
+   "rule": "budget.baseline.delta-shown",
+   "source": "carbon_budget.py#render",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_render_shows_delta_against_base",
+   "tests": [
+    "tests/test_carbon_budget.py#test_render_shows_delta_against_base"
+   ]
+  },
+  "budget-enforcement.budget-gate.001": {
+   "file": "specs/budget-enforcement/budget-gate/budget-gate.feature",
+   "fingerprint": "6522ab483042",
+   "human": false,
+   "rule": "budget.gate.fail-over-budget",
+   "source": "carbon_budget.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "budget-enforcement.budget-gate.002": {
+   "file": "specs/budget-enforcement/budget-gate/budget-gate.feature",
+   "fingerprint": "6522ab483042",
+   "human": false,
+   "rule": "budget.gate.report-mode-never-fails",
+   "source": "carbon_budget.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "budget-enforcement.rolling-budget.001": {
+   "file": "specs/budget-enforcement/rolling-budget/rolling-budget.feature",
+   "fingerprint": "b36b57cf2bc3",
+   "human": false,
+   "rule": "budget.rolling.running-total-gated",
+   "source": "carbon_budget.py#emit_results",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_rollover_burn_carries_forward_within_window",
+   "tests": [
+    "tests/test_carbon_budget.py#test_rollover_burn_carries_forward_within_window",
+    "tests/test_carbon_budget.py#test_render_shows_window_burn_status"
+   ]
+  },
+  "budget-enforcement.rolling-budget.002": {
+   "file": "specs/budget-enforcement/rolling-budget/rolling-budget.feature",
+   "fingerprint": "71aa0666daed",
+   "human": false,
+   "rule": "budget.rolling.window-rollover",
+   "source": "carbon_budget.py#rollover_burn",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_rollover_burn_resets_once_window_elapsed",
+   "tests": [
+    "tests/test_carbon_budget.py#test_rollover_burn_resets_once_window_elapsed",
+    "tests/test_carbon_budget.py#test_rollover_burn_no_window_start_starts_fresh"
+   ]
+  },
+  "carbon-estimation.embodied-emissions.001": {
+   "file": "specs/carbon-estimation/embodied-emissions/embodied-emissions.feature",
+   "fingerprint": "a893fea09fe9",
+   "human": false,
+   "rule": "carbon.embodied.amortized-over-lifetime",
+   "source": "carbon_budget.py#amortized_embodied_gco2e",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_amortized_embodied_gco2e_scales_with_hours_and_replicas",
+   "tests": [
+    "tests/test_carbon_budget.py#test_amortized_embodied_gco2e_scales_with_hours_and_replicas",
+    "tests/test_carbon_budget.py#test_render_shows_embodied_line"
+   ]
+  },
+  "carbon-estimation.embodied-emissions.002": {
+   "file": "specs/carbon-estimation/embodied-emissions/embodied-emissions.feature",
+   "fingerprint": "a893fea09fe9",
+   "human": false,
+   "rule": "carbon.embodied.off-unless-configured",
+   "source": "carbon_budget.py#amortized_embodied_gco2e",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_amortized_embodied_gco2e_zero_when_not_configured",
+   "tests": [
+    "tests/test_carbon_budget.py#test_amortized_embodied_gco2e_zero_when_not_configured"
+   ]
+  },
+  "carbon-estimation.operational-emissions.001": {
+   "file": "specs/carbon-estimation/operational-emissions/operational-emissions.feature",
+   "fingerprint": "b1abd4456e5f",
+   "human": false,
+   "rule": "carbon.operational.power-model-estimate",
+   "source": "carbon_budget.py#estimate_gco2e",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_estimate_scales_linearly_with_replicas",
+   "tests": [
+    "tests/test_carbon_budget.py#test_estimate_scales_linearly_with_replicas"
+   ]
+  },
+  "carbon-estimation.operational-emissions.002": {
+   "file": "specs/carbon-estimation/operational-emissions/operational-emissions.feature",
+   "fingerprint": "6522ab483042",
+   "human": false,
+   "rule": "carbon.operational.default-workload",
+   "source": "carbon_budget.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "carbon-estimation.workload-sizing.001": {
+   "file": "specs/carbon-estimation/workload-sizing/workload-sizing.feature",
+   "fingerprint": "b4b7138c7f9a",
+   "human": false,
+   "rule": "carbon.workload.manifest-overrides-inputs",
+   "source": "carbon_budget.py#parse_manifest",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_parse_manifest_reads_replicas_and_first_container_requests",
+   "tests": [
+    "tests/test_carbon_budget.py#test_parse_manifest_reads_replicas_and_first_container_requests",
+    "tests/test_carbon_budget.py#test_parse_manifest_missing_fields_return_empty_dict"
+   ]
+  },
+  "carbon-estimation.workload-sizing.002": {
+   "file": "specs/carbon-estimation/workload-sizing/workload-sizing.feature",
+   "fingerprint": "1057881ae39f",
+   "human": false,
+   "rule": "carbon.workload.kubernetes-quantity-units",
+   "source": "carbon_budget.py#parse_cpu",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_parsers",
+   "tests": [
+    "tests/test_carbon_budget.py#test_parsers"
+   ]
+  },
+  "ci-integrations.devtron.001": {
+   "file": "specs/ci-integrations/devtron/devtron-pre-deployment-gate.feature",
+   "fingerprint": "6522ab483042",
+   "human": false,
+   "rule": "ci.devtron.rendered-chart-sizes-workload",
+   "source": "carbon_budget.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "documentation-site.site-styling.001": {
+   "file": "specs/documentation-site/site-styling/docs-site-look-and-feel.feature",
+   "fingerprint": "d8424b84d164",
+   "human": false,
+   "rule": "docs.styling.shared-greenops-accent",
+   "source": "docs/stylesheets/extra.css#:root",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "documentation-site.site-styling.002": {
+   "file": "specs/documentation-site/site-styling/docs-site-look-and-feel.feature",
+   "fingerprint": "d8424b84d164",
+   "human": false,
+   "rule": "docs.styling.no-third-party-requests",
+   "source": "docs/stylesheets/extra.css#:root",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "documentation-site.site-styling.003": {
+   "file": "specs/documentation-site/site-styling/docs-site-look-and-feel.feature",
+   "fingerprint": "c702704e5aae",
+   "human": false,
+   "rule": "docs.styling.no-stand-in-logo",
+   "source": "docs/stylesheets/extra.css#.md-header__button.md-logo",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "documentation-site.site-styling.004": {
+   "file": "specs/documentation-site/site-styling/docs-site-look-and-feel.feature",
+   "fingerprint": "721086d36c47",
+   "human": false,
+   "rule": "docs.styling.wide-tables-readable-on-narrow-screens",
+   "source": "docs/stylesheets/extra.css#.md-typeset table:not([class])",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "grid-intensity.ci-api-live-data.001": {
+   "file": "specs/grid-intensity/ci-api-live-data/ci-api-intensity.feature",
+   "fingerprint": "22566a85465a",
+   "human": false,
+   "rule": "grid.ci-api.most-complete-figure",
+   "source": "carbon_budget.py#fetch_ci_api_intensity",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_ci_api_reports_consumption_lifecycle",
+   "tests": [
+    "tests/test_carbon_budget.py#test_ci_api_reports_consumption_lifecycle",
+    "tests/test_carbon_budget.py#test_ci_api_zone_falls_back_to_lifecycle"
+   ]
+  },
+  "grid-intensity.ci-api-live-data.002": {
+   "file": "specs/grid-intensity/ci-api-live-data/ci-api-intensity.feature",
+   "fingerprint": "b6b979798282",
+   "human": false,
+   "rule": "grid.ci-api.zone-falls-back-to-country",
+   "source": "carbon_budget.py#_ci_api_payload",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_ci_api_zone_404_asks_the_country_after_waiting_out_the_rate_limit",
+   "tests": [
+    "tests/test_carbon_budget.py#test_ci_api_zone_404_asks_the_country_after_waiting_out_the_rate_limit"
+   ]
+  },
+  "grid-intensity.ci-api-live-data.003": {
+   "file": "specs/grid-intensity/ci-api-live-data/ci-api-intensity.feature",
+   "fingerprint": "f884591c699f",
+   "human": false,
+   "rule": "grid.ci-api.stale-measurement-refused",
+   "source": "carbon_budget.py#_reading_is_fresh",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_ci_api_refuses_a_stale_measurement",
+   "tests": [
+    "tests/test_carbon_budget.py#test_ci_api_refuses_a_stale_measurement",
+    "tests/test_carbon_budget.py#test_ci_api_reports_consumption_lifecycle"
+   ]
+  },
+  "grid-intensity.ci-api-live-data.004": {
+   "file": "specs/grid-intensity/ci-api-live-data/ci-api-intensity.feature",
+   "fingerprint": "22566a85465a",
+   "human": false,
+   "rule": "grid.ci-api.annual-average-accepted",
+   "source": "carbon_budget.py#fetch_ci_api_intensity",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_ci_api_accepts_an_annual_average_and_names_it",
+   "tests": [
+    "tests/test_carbon_budget.py#test_ci_api_accepts_an_annual_average_and_names_it"
+   ]
+  },
+  "grid-intensity.electricity-maps.001": {
+   "file": "specs/grid-intensity/electricity-maps/live-grid-intensity.feature",
+   "fingerprint": "8e886bc7ca6d",
+   "human": false,
+   "rule": "grid.source.precedence-and-fallback",
+   "source": "carbon_budget.py#resolve_grid_intensity",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_fetch_live_intensity_returns_value_on_success",
+   "tests": [
+    "tests/test_carbon_budget.py#test_fetch_live_intensity_returns_value_on_success",
+    "tests/test_carbon_budget.py#test_fetch_live_intensity_falls_back_to_none_on_error",
+    "tests/test_carbon_budget.py#test_ci_api_failure_falls_back_to_the_static_input"
+   ]
+  },
+  "reporting.action-outputs.001": {
+   "file": "specs/reporting/action-outputs/action-outputs.feature",
+   "fingerprint": "b36b57cf2bc3",
+   "human": false,
+   "rule": "reporting.outputs.estimate-and-verdict",
+   "source": "carbon_budget.py#emit_results",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "reporting.job-summary.001": {
+   "file": "specs/reporting/job-summary/job-summary.feature",
+   "fingerprint": "929bb27eff0b",
+   "human": false,
+   "rule": "reporting.summary.verdict-and-usage-bar",
+   "source": "carbon_budget.py#render",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_render_over_budget_flags",
+   "tests": [
+    "tests/test_carbon_budget.py#test_render_over_budget_flags"
+   ]
+  },
+  "reporting.pr-comments.001": {
+   "file": "specs/reporting/pr-comments/pr-comments.feature",
+   "fingerprint": "b675a0420e95",
+   "human": false,
+   "rule": "reporting.pr-comment.single-updated-comment",
+   "source": "carbon_budget.py#upsert_pr_comment",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_upsert_pr_comment_patches_existing_marker_comment",
+   "tests": [
+    "tests/test_carbon_budget.py#test_upsert_pr_comment_patches_existing_marker_comment"
+   ]
+  },
+  "reporting.pr-comments.002": {
+   "file": "specs/reporting/pr-comments/pr-comments.feature",
+   "fingerprint": "d13074db620a",
+   "human": false,
+   "rule": "reporting.pr-comment.skipped-without-prerequisites",
+   "source": "carbon_budget.py#post_pr_comment",
+   "status": "verified",
+   "test": "tests/test_carbon_budget.py#test_find_pr_number_missing_path_returns_none",
+   "tests": [
+    "tests/test_carbon_budget.py#test_find_pr_number_missing_path_returns_none"
+   ]
+  },
+  "reporting.pr-comments.003": {
+   "file": "specs/reporting/pr-comments/pr-comments.feature",
+   "fingerprint": "d13074db620a",
+   "human": false,
+   "rule": "reporting.pr-comment.failure-only-warns",
+   "source": "carbon_budget.py#post_pr_comment",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Reading replicas, CPU and memory requests from inputs or a rendered Kubernetes manifest.",
+      "slug": "workload-sizing",
+      "title": "Workload sizing"
+     },
+     {
+      "description": "Estimating energy-use emissions from cores, memory, PUE, hours and grid intensity.",
+      "slug": "operational-emissions",
+      "title": "Operational emissions"
+     },
+     {
+      "description": "Amortizing hardware manufacturing emissions over its lifetime into the estimate window.",
+      "slug": "embodied-emissions",
+      "title": "Embodied emissions"
+     }
+    ],
+    "description": "Turning a deployment's size and runtime into an explainable grams-of-CO2e figure.",
+    "slug": "carbon-estimation",
+    "title": "Carbon estimation"
+   },
+   {
+    "areas": [
+     {
+      "description": "Using a configured or default grid intensity value when no live source is set.",
+      "slug": "static-intensity",
+      "title": "Static intensity"
+     },
+     {
+      "description": "Fetching the latest zone intensity from the Electricity Maps API with a token.",
+      "slug": "electricity-maps",
+      "title": "Electricity Maps live data"
+     },
+     {
+      "description": "Fetching country/zone intensity from the public CI API with rate limiting and freshness checks.",
+      "slug": "ci-api-live-data",
+      "title": "Carbon intensity API"
+     }
+    ],
+    "description": "Choosing the carbon intensity of the electricity the workload runs on.",
+    "slug": "grid-intensity",
+    "title": "Grid intensity"
+   },
+   {
+    "areas": [
+     {
+      "description": "Comparing the estimate to the budget and exiting non-zero in gate mode, or only reporting otherwise.",
+      "slug": "budget-gate",
+      "title": "Budget gate"
+     },
+     {
+      "description": "Showing the change against a base branch's estimate.",
+      "slug": "baseline-comparison",
+      "title": "Baseline comparison"
+     },
+     {
+      "description": "Tracking burned emissions across a budget window with rollover.",
+      "slug": "rolling-budget",
+      "title": "Rolling budget tracking"
+     }
+    ],
+    "description": "Deciding whether a deployment fits its carbon budget and failing CI when it does not.",
+    "slug": "budget-enforcement",
+    "title": "Budget enforcement"
+   },
+   {
+    "areas": [
+     {
+      "description": "Rendering the markdown report with usage bars into the CI job summary.",
+      "slug": "job-summary",
+      "title": "Job summary"
+     },
+     {
+      "description": "Publishing estimate, verdict and burn figures as step outputs.",
+      "slug": "action-outputs",
+      "title": "Action outputs"
+     },
+     {
+      "description": "Creating or updating a single marked comment on the pull request with the report.",
+      "slug": "pr-comments",
+      "title": "Pull request comments"
+     }
+    ],
+    "description": "Communicating results to people and downstream workflow steps.",
+    "slug": "reporting",
+    "title": "Reporting"
+   },
+   {
+    "areas": [
+     {
+      "description": "A shell task that downloads the estimator and gates a Devtron CD stage.",
+      "slug": "devtron",
+      "title": "Devtron pre-deployment task"
+     },
+     {
+      "description": "Configuring the estimator purely through environment variables on any runner.",
+      "slug": "standalone-script",
+      "title": "Standalone script usage"
+     }
+    ],
+    "description": "Running the carbon gate outside GitHub Actions on other delivery platforms.",
+    "slug": "ci-integrations",
+    "title": "CI platform integrations"
+   },
+   {
+    "areas": [
+     {
+      "description": "Custom look and feel of the documentation pages.",
+      "slug": "site-styling",
+      "title": "Site styling"
+     },
+     {
+      "description": "Written usage guides and example configurations shipped with the docs.",
+      "slug": "guides-and-examples",
+      "title": "Guides and examples"
+     }
+    ],
+    "description": "The published user documentation for the action.",
+    "slug": "documentation-site",
+    "title": "Documentation site"
+   },
+   {
+    "areas": [
+     {
+      "description": "Installing dev dependencies and the pre-commit hook, plus help and no-op install/build targets.",
+      "slug": "dev-setup",
+      "title": "Development setup"
+     },
+     {
+      "description": "Running the estimator locally against environment inputs.",
+      "slug": "local-run",
+      "title": "Local run"
+     },
+     {
+      "description": "Tests, linting, formatting and security scanning that mirror the CI gate.",
+      "slug": "quality-checks",
+      "title": "Quality checks"
+     }
+    ],
+    "description": "Local workflows for contributors to set up, run, test and check the project.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   }
+  ]
+ }
+}
