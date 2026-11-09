@@ -1,5 +1,10 @@
 # carbon-budget-action
 
+> [!WARNING]
+> **This project is retired** and no longer maintained. It has been merged into
+> [sci-disclose](https://github.com/fabiocicerchia/sci-disclose), where the
+> carbon budget gate is the `--budget` flag; use that instead.
+
 [![CI](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/ci.yml/badge.svg)](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/ci.yml)
 [![Security](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/security.yml/badge.svg)](https://github.com/fabiocicerchia/carbon-budget-action/actions/workflows/security.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fabiocicerchia/carbon-budget-action/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fabiocicerchia/carbon-budget-action)
